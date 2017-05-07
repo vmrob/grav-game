@@ -1,7 +1,7 @@
 const GRAVITATIONAL_CONSTANT = 1000;
-const THRUSTER_FORCE = 100000;
+const THRUSTER_BASE_FORCE = 100000;
 const PLAYER_START_MASS = 1000;
-const DECAY_PER_STEP = 0.001;
+const DECAY_PER_STEP = 0.0001;
 const MINIMUM_DECAY_MASS = PLAYER_START_MASS;
 
 var Distance = function(x1, x2, y1, y2) {
@@ -165,7 +165,8 @@ class Body {
     var cooldownActive = this.cooldownActivationTime > new Date().getTime() - 5000;
     var gravityInfluence = cooldownActive ? 0.1 : 1.0;
     var f = new Vector(this.gravitationalForce.x * gravityInfluence, this.gravitationalForce.y * gravityInfluence);
-    var thrusterForce = (cooldownActive ? 2.0 : 1.0) * THRUSTER_FORCE;
+    var thrusterBonus = THRUSTER_BASE_FORCE * this.mass / PLAYER_START_MASS / 2;
+    var thrusterForce = (cooldownActive ? 2.0 : 1.0) * THRUSTER_BASE_FORCE + thrusterBonus;
     if (this.leftThrusterEnabled) {
         f.x += thrusterForce;
     }
@@ -272,7 +273,7 @@ window.setInterval(function() {
 
 window.setInterval(function() {
   var pos = RandomPosition(canvas.width, canvas.height);
-  var massMax = Math.max(Math.max(player1Body.mass, player2Body.mass) * 0.99, 0);
+  var massMax = Math.min(Math.max(Math.max(player1Body.mass, player2Body.mass) * 0.99, 0), PLAYER_START_MASS * 10);
   var mass = RandomInt(Math.min(10, massMax), massMax);
   universe.addBody(new Body("", '#FF0000', mass, pos, {x: 0, y: 0}));
 }, 1000 * 10);
