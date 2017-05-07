@@ -103,9 +103,36 @@ class Universe {
   }
 
   draw() {
+    var min = new Vector(0, 0);
+    var max = new Vector(context.canvas.width, context.canvas.height);
+    var padding = 10;
+    for (var i in this.bodies) {
+      var pos = this.bodies[i].pos;
+      var r = this.bodies[i].radius;
+      if (pos.x - r - padding < min.x) {
+          min.x = pos.x - r - padding;
+      }
+      if (pos.y - r - padding < min.y) {
+          min.y = pos.y - r - padding;
+      }
+      if (pos.x + r + padding > max.x) {
+          max.x = pos.x + r + padding;
+      }
+      if (pos.y + r + padding > max.y) {
+          max.y = pos.y + r + padding;
+      }
+    }
+    context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+    var scaleX = context.canvas.width / (max.x - min.x);
+    var scaleY = context.canvas.height / (max.y - min.y);
+    var scale = scaleX > scaleY ? scaleY : scaleX;
+    context.scale(scale, scale);
+    context.translate(-min.x, -min.y);
     for (var i in this.bodies) {
       this.bodies[i].draw(context);
     }
+    context.translate(min.x, min.y);
+    context.scale(1.0 / scale, 1.0 / scale);
   }
 };
 
@@ -263,7 +290,6 @@ function gameLoop() {
 }
 
 window.setInterval(function() {
-  context.clearRect(0, 0, context.canvas.width, context.canvas.height);
   universe.draw();
 }, 1000 / 30);
 
