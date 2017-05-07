@@ -53,7 +53,7 @@ class Universe {
         netForces.push(this.bodies[i].gravitationalForceTo(this.bodies[j]));
       }
 
-      this.bodies[i].force = netForces.reduce(function(carry, force) {
+      this.bodies[i].gravitationalForce = netForces.reduce(function(carry, force) {
         return {
           x: carry.x + force.x,
           y: carry.y + force.y,
@@ -99,7 +99,7 @@ class Body {
     this.rightThrusterEnabled = false;
     this.bottomThrusterEnabled = false;
     this.topThrusterEnabled = false;
-    this.force = {
+    this.gravitationalForce = {
       x: 0,
       y: 0,
     };
@@ -109,35 +109,52 @@ class Body {
     return Math.sqrt(this.mass / Math.PI); // assume mass == area
   }
 
-  draw(canvasContext) {
-    canvasContext.beginPath();
-    canvasContext.arc(this.pos.x, this.pos.y, this.radius, 0, 2 * Math.PI);
-    canvasContext.fillStyle = this.color;
-    canvasContext.fill();
-    canvasContext.lineWidth = 5;
-    canvasContext.strokeStyle = '#003300';
-    canvasContext.stroke();
-    canvasContext.textAlign = 'center';
-    canvasContext.fillText(this.label, this.pos.x, this.pos.y + this.radius + 14);
+  draw(ctx) {
+    ctx.beginPath();
+    ctx.arc(this.pos.x, this.pos.y, this.radius, 0, 2 * Math.PI);
+    ctx.fillStyle = this.color;
+    ctx.fill();
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#003300';
+    ctx.stroke();
+    ctx.textAlign = 'center';
+    ctx.fillText(this.label, this.pos.x, this.pos.y + this.radius + 14);
+
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = this.color;
+    ctx.globalAlpha = 0.7;
+    ctx.setLineDash([20, 15]);
+    ctx.beginPath();
+    ctx.moveTo(this.pos.x, this.pos.y);
+    var f = this.force();
+    ctx.lineTo(this.pos.x + f.x / this.mass, this.pos.y + f.y / this.mass);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1.0;
+  }
+
+  force() {
+    var f = new Vector(this.gravitationalForce.x, this.gravitationalForce.y);
+    if (this.leftThrusterEnabled) {
+        f.x += THRUSTER_FORCE;
+    }
+    if (this.rightThrusterEnabled) {
+        f.x -= THRUSTER_FORCE;
+    }
+    if (this.topThrusterEnabled) {
+        f.y += THRUSTER_FORCE;
+    }
+    if (this.bottomThrusterEnabled) {
+        f.y -= THRUSTER_FORCE;
+    }
+    return f;
   }
 
   step(duration) {
-    var force = new Vector(this.force.x, this.force.y);
-    if (this.leftThrusterEnabled) {
-        force.x += THRUSTER_FORCE;
-    }
-    if (this.rightThrusterEnabled) {
-        force.x -= THRUSTER_FORCE;
-    }
-    if (this.topThrusterEnabled) {
-        force.y += THRUSTER_FORCE;
-    }
-    if (this.bottomThrusterEnabled) {
-        force.y -= THRUSTER_FORCE;
-    }
+    var f = this.force();
     this.velocity = {
-      x: this.velocity.x + force.x / this.mass * duration,
-      y: this.velocity.y + force.y / this.mass * duration,
+      x: this.velocity.x + f.x / this.mass * duration,
+      y: this.velocity.y + f.y / this.mass * duration,
     };
     this.pos = {
       x: this.pos.x + this.velocity.x * duration,
