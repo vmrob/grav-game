@@ -1,7 +1,8 @@
 const GRAVITATIONAL_CONSTANT = 1000;
 const THRUSTER_FORCE = 100000;
 const PLAYER_START_MASS = 1000;
-const DECAY_PER_STEP = 0.0005;
+const DECAY_PER_STEP = 0.001;
+const MINIMUM_DECAY_MASS = PLAYER_START_MASS;
 
 var Distance = function(x1, x2, y1, y2) {
   return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
@@ -9,6 +10,13 @@ var Distance = function(x1, x2, y1, y2) {
 
 function RandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
+function RandomPosition(width, height) {
+  return {
+    x: RandomInt(0, width),
+    y: RandomInt(0, height),
+  };
 }
 
 class Vector {
@@ -32,7 +40,7 @@ class Vector {
 
 class Universe {
   constructor(bodies) {
-    this.bodies = bodies
+    this.bodies = bodies;
   }
 
   addBody(body) {
@@ -116,6 +124,7 @@ class Body {
       x: 0,
       y: 0,
     };
+    this.static = false;
   }
 
   get radius() {
@@ -169,11 +178,13 @@ class Body {
   }
 
   step(duration) {
-    var f = this.force();
-    this.velocity = {
-      x: this.velocity.x + f.x / this.mass * duration,
-      y: this.velocity.y + f.y / this.mass * duration,
-    };
+    if (!this.static) {
+      var f = this.force();
+      this.velocity = {
+        x: this.velocity.x + f.x / this.mass * duration,
+        y: this.velocity.y + f.y / this.mass * duration,
+      };
+    }
     this.pos = {
       x: this.pos.x + this.velocity.x * duration,
       y: this.pos.y + this.velocity.y * duration,
@@ -189,6 +200,9 @@ class Body {
   }
 
   gravitationalForceTo(body) {
+    if (this.static || body.static) {
+      return new Vector(0, 0);
+    }
     var vec = this.vectorTo(body);
     var force = GRAVITATIONAL_CONSTANT * this.mass * body.mass / Math.pow(this.distanceTo(body), 2);
     return vec.withMagnitude(force);
@@ -199,9 +213,12 @@ class Body {
   }
 
   mergeWith(body) {
-    this.velocity = {
-      x: (this.velocity.x * this.mass + body.velocity.x * body.mass) / (this.mass + body.mass),
-      y: (this.velocity.y * this.mass + body.velocity.y * body.mass) / (this.mass + body.mass),
+    // don't conserve velocity against static bodies
+    if (!this.static && !body.static) {
+      this.velocity = {
+        x: (this.velocity.x * this.mass + body.velocity.x * body.mass) / (this.mass + body.mass),
+        y: (this.velocity.y * this.mass + body.velocity.y * body.mass) / (this.mass + body.mass),
+      }
     }
     // conservation of position?
     this.pos = {
@@ -209,10 +226,13 @@ class Body {
       y: (this.pos.y * this.mass + body.pos.y * body.mass) / (this.mass + body.mass),
     }
     this.mass += body.mass;
+    body.mass = 0;
   }
 
   decay(percent) {
-    this.mass *= 1 - percent;
+    if (this.mass >= MINIMUM_DECAY_MASS) {
+      this.mass *= 1 - percent;
+    }
   }
 };
 
@@ -223,20 +243,31 @@ var player1Body = new Body('Player 1', '#cfcf80', PLAYER_START_MASS, {x:  200, y
 var player2Body = new Body('Player 2', '#80cfcf', PLAYER_START_MASS, {x: 1000, y: 350}, {x: 0, y: 0});
 var universe = new Universe([player1Body, player2Body]);
 
+function gameLoop() {
+  universe.step(1 / 60);
+  if (player1Body.mass == 0) {
+    var pos = RandomPosition(canvas.width, canvas.height);
+    player1Body = new Body('Player 1', '#cfcf80', PLAYER_START_MASS, pos, {x: 0, y: 0});
+    universe.addBody(player1Body);
+  }
+  if (player2Body.mass == 0) {
+    var pos = RandomPosition(canvas.width, canvas.height);
+    player2Body = new Body('Player 2', '#80cfcf', PLAYER_START_MASS, pos, {x: 0, y: 0});
+    universe.addBody(player2Body);
+  }
+}
+
 window.setInterval(function() {
   context.clearRect(0, 0, context.canvas.width, context.canvas.height);
   universe.draw();
 }, 1000 / 30);
 
 window.setInterval(function() {
-  universe.step(1 / 60);
+  gameLoop();
 }, 1000 / 60);
 
 window.setInterval(function() {
-  var pos = {
-    x: RandomInt(0, canvas.width),
-    y: RandomInt(0, canvas.height),
-  };
+  var pos = RandomPosition(canvas.width, canvas.height);
   var massMax = Math.max(Math.max(player1Body.mass, player2Body.mass) * 0.99, 0);
   var mass = RandomInt(Math.min(10, massMax), massMax);
   universe.addBody(new Body("", '#FF0000', mass, pos, {x: 0, y: 0}));
@@ -248,7 +279,9 @@ window.setInterval(function() {
     y: RandomInt(0, canvas.height),
   };
   var mass = RandomInt(PLAYER_START_MASS * 0.1, PLAYER_START_MASS * 0.5);
-  universe.addBody(new Body("", '#FF00FF', mass, pos, {x: 0, y: 0}));
+  var body = new Body("", '#FF00FF', mass, pos, {x: 0, y: 0})
+  body.static = true;
+  universe.addBody(body);
 }, 500);
 
 $(function() {
