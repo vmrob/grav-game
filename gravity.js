@@ -1,5 +1,7 @@
 const GRAVITATIONAL_CONSTANT = 1000;
 const THRUSTER_FORCE = 100000;
+const PLAYER_START_MASS = 1000;
+const DECAY_PER_STEP = 0.001;
 
 var Distance = function(x1, x2, y1, y2) {
   return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
@@ -38,6 +40,7 @@ class Universe {
   }
 
   step(duration) {
+    this.decayBodies();
     this.checkCollisions();
     this.applyForces();
     for (var i in this.bodies) {
@@ -63,6 +66,12 @@ class Universe {
           y: carry.y + force.y,
         };
       }, {x: 0, y: 0});
+    }
+  }
+
+  decayBodies() {
+    for (var i in this.bodies) {
+      this.bodies[i].decay(DECAY_PER_STEP);
     }
   }
 
@@ -201,13 +210,17 @@ class Body {
     }
     this.mass += body.mass;
   }
+
+  decay(percent) {
+    this.mass *= 1 - percent;
+  }
 };
 
 canvas = document.getElementById('gameCanvas')
 context = canvas.getContext("2d");
 
-var player1Body = new Body('Player 1', '#cfcf80', 1000, {x:  200, y: 350}, {x: 0, y: 0});
-var player2Body = new Body('Player 2', '#80cfcf', 1000, {x: 1000, y: 350}, {x: 0, y: 0});
+var player1Body = new Body('Player 1', '#cfcf80', PLAYER_START_MASS, {x:  200, y: 350}, {x: 0, y: 0});
+var player2Body = new Body('Player 2', '#80cfcf', PLAYER_START_MASS, {x: 1000, y: 350}, {x: 0, y: 0});
 var universe = new Universe([player1Body, player2Body]);
 
 window.setInterval(function() {
@@ -227,7 +240,16 @@ window.setInterval(function() {
   var massMax = Math.max(Math.max(player1Body.mass, player2Body.mass) * 1.5, 0);
   var mass = RandomInt(Math.min(10, massMax), massMax);
   universe.addBody(new Body("", '#FF0000', mass, pos, {x: 0, y: 0}));
-}, 1000 * 5);
+}, 1000 * 10);
+
+window.setInterval(function() {
+  var pos = {
+    x: RandomInt(0, canvas.width),
+    y: RandomInt(0, canvas.height),
+  };
+  var mass = RandomInt(PLAYER_START_MASS * 0.1, PLAYER_START_MASS * 0.5);
+  universe.addBody(new Body("", '#FF00FF', mass, pos, {x: 0, y: 0}));
+}, 1000);
 
 $(function() {
     $(document).keydown(function(e) {
