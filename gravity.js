@@ -34,7 +34,7 @@ class Universe {
 
   step(duration) {
     this.applyForces();
-    this.applyCollisions();
+    // this.applyCollisions();
     for (var i in this.bodies) {
       this.bodies[i].step(duration);
     }
@@ -61,18 +61,15 @@ class Universe {
     }
   }
 
-  applyCollisions() {
-    for (i = 0; i < this.bodies.length - 1; ++i) {
-      for (j = i + 1; j < this.bodies.length; ++j) {
-        if (i == j) {
-          continue;
-        }
-        if this.bodies[i].collidesWith(this.bodies[j]) {
-
-        }
-      }
-    }
-  }
+  // applyCollisions() {
+  //   for (i = 0; i < this.bodies.length - 1; ++i) {
+  //     for (j = i + 1; j < this.bodies.length; ++j) {
+  //       if (this.bodies[i].collidesWith(this.bodies[j])) {
+  //
+  //       }
+  //     }
+  //   }
+  // }
 
   draw() {
     for (var i in this.bodies) {
