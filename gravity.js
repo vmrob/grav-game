@@ -5,6 +5,10 @@ var Distance = function(x1, x2, y1, y2) {
   return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
 }
 
+function RandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
 class Vector {
   constructor(x, y) {
     this.x = x;
@@ -199,10 +203,11 @@ class Body {
   }
 };
 
-context = document.getElementById('gameCanvas').getContext("2d");
+canvas = document.getElementById('gameCanvas')
+context = canvas.getContext("2d");
 
-var player1Body = new Body('Player 1', '#cfcf80', 1000, {x: 200, y: 200}, {x: 50, y: 0});
-var player2Body = new Body('Player 2', '#80cfcf', 1000, {x: 300, y: 300}, {x: -50, y: 0});
+var player1Body = new Body('Player 1', '#cfcf80', 1000, {x:  200, y: 350}, {x: 0, y: 0});
+var player2Body = new Body('Player 2', '#80cfcf', 1000, {x: 1000, y: 350}, {x: 0, y: 0});
 var universe = new Universe([player1Body, player2Body]);
 
 window.setInterval(function() {
@@ -213,6 +218,15 @@ window.setInterval(function() {
 window.setInterval(function() {
   universe.step(1 / 60);
 }, 1000 / 60);
+
+window.setInterval(function() {
+  var pos = {
+    x: RandomInt(0, canvas.width),
+    y: RandomInt(0, canvas.height),
+  };
+  var mass = RandomInt(10, 3000);
+  universe.addBody(new Body("", '#FF0000', mass, pos, {x: 0, y: 0}));
+}, 1000 * 5);
 
 $(function() {
     $(document).keydown(function(e) {
