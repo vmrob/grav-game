@@ -110,24 +110,29 @@ class Body {
   }
 
   draw(ctx) {
+    var r = this.radius;
+    var f = this.force();
+    var fMag = f.magnitude;
+    var fNorm = new Vector(f.x / fMag, f.y / fMag);
+
     ctx.beginPath();
-    ctx.arc(this.pos.x, this.pos.y, this.radius, 0, 2 * Math.PI);
+    ctx.arc(this.pos.x, this.pos.y, r, 0, 2 * Math.PI);
     ctx.fillStyle = this.color;
     ctx.fill();
     ctx.lineWidth = 5;
     ctx.strokeStyle = '#003300';
     ctx.stroke();
     ctx.textAlign = 'center';
-    ctx.fillText(this.label, this.pos.x, this.pos.y + this.radius + 14);
+    ctx.fillText(this.label, this.pos.x, this.pos.y + r + 14);
 
     ctx.lineWidth = 2;
     ctx.strokeStyle = this.color;
     ctx.globalAlpha = 0.7;
     ctx.setLineDash([20, 15]);
     ctx.beginPath();
-    ctx.moveTo(this.pos.x, this.pos.y);
-    var f = this.force();
-    ctx.lineTo(this.pos.x + f.x / this.mass, this.pos.y + f.y / this.mass);
+    var lStart = new Vector(this.pos.x + r * fNorm.x, this.pos.y + r * fNorm.y);
+    ctx.moveTo(lStart.x, lStart.y);
+    ctx.lineTo(lStart.x + f.x / this.mass, lStart.y + f.y / this.mass);
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.globalAlpha = 1.0;
