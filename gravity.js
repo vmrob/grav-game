@@ -1,4 +1,4 @@
-const GRAVITATIONAL_CONSTANT = 1;
+const GRAVITATIONAL_CONSTANT = 1000;
 
 var Distance = function(x1, x2, y1, y2) {
   return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
@@ -105,8 +105,8 @@ class Body {
 
   step(duration) {
     this.velocity = {
-      x: this.velocity.x + this.force.x * duration,
-      y: this.velocity.y + this.force.y * duration,
+      x: this.velocity.x + this.force.x / this.mass * duration,
+      y: this.velocity.y + this.force.y / this.mass * duration,
     };
     this.pos = {
       x: this.pos.x + this.velocity.x * duration,
