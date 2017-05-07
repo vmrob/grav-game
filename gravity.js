@@ -131,6 +131,7 @@ class Universe {
     for (var i in this.bodies) {
       this.bodies[i].draw(context);
     }
+
     context.translate(min.x, min.y);
     context.scale(1.0 / scale, 1.0 / scale);
   }
@@ -192,8 +193,7 @@ class Body {
     var cooldownActive = this.cooldownActivationTime > new Date().getTime() - 5000;
     var gravityInfluence = cooldownActive ? 0.1 : 1.0;
     var f = new Vector(this.gravitationalForce.x * gravityInfluence, this.gravitationalForce.y * gravityInfluence);
-    var thrusterBonus = THRUSTER_BASE_FORCE * this.mass / PLAYER_START_MASS / 2;
-    var thrusterForce = (cooldownActive ? 2.0 : 1.0) * THRUSTER_BASE_FORCE + thrusterBonus;
+    var thrusterForce = (cooldownActive ? 2.0 : 1.0) * THRUSTER_BASE_FORCE * (2 + this.mass) / (PLAYER_START_MASS * 2);
     if (this.leftThrusterEnabled) {
         f.x += thrusterForce;
     }
