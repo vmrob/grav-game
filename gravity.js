@@ -224,7 +224,8 @@ window.setInterval(function() {
     x: RandomInt(0, canvas.width),
     y: RandomInt(0, canvas.height),
   };
-  var mass = RandomInt(10, 3000);
+  var massMax = Math.max(Math.max(player1Body.mass, player2Body.mass) * 1.5, 0);
+  var mass = RandomInt(Math.min(10, massMax), massMax);
   universe.addBody(new Body("", '#FF0000', mass, pos, {x: 0, y: 0}));
 }, 1000 * 5);
 
