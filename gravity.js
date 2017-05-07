@@ -125,6 +125,7 @@ class Body {
       y: 0,
     };
     this.static = false;
+    this.cooldownActivationTime = 0;
   }
 
   get radius() {
@@ -161,18 +162,21 @@ class Body {
   }
 
   force() {
-    var f = new Vector(this.gravitationalForce.x, this.gravitationalForce.y);
+    var cooldownActive = this.cooldownActivationTime > new Date().getTime() - 5000;
+    var gravityInfluence = cooldownActive ? 0.1 : 1.0;
+    var f = new Vector(this.gravitationalForce.x * gravityInfluence, this.gravitationalForce.y * gravityInfluence);
+    var thrusterForce = (cooldownActive ? 2.0 : 1.0) * THRUSTER_FORCE;
     if (this.leftThrusterEnabled) {
-        f.x += THRUSTER_FORCE;
+        f.x += thrusterForce;
     }
     if (this.rightThrusterEnabled) {
-        f.x -= THRUSTER_FORCE;
+        f.x -= thrusterForce;
     }
     if (this.topThrusterEnabled) {
-        f.y += THRUSTER_FORCE;
+        f.y += thrusterForce;
     }
     if (this.bottomThrusterEnabled) {
-        f.y -= THRUSTER_FORCE;
+        f.y -= thrusterForce;
     }
     return f;
   }
@@ -311,6 +315,11 @@ $(function() {
             case 40: // down
                 player2Body.topThrusterEnabled = true;
                 break;
+            case 16: // shift
+                var body = e.originalEvent.code == "ShiftLeft" ? player1Body : player2Body;
+                body.mass *= 0.5;
+                body.cooldownActivationTime = new Date().getTime();
+                body.velocity = new Vector(0, 0);
             default:
                 return;
         }
