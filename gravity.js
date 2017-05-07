@@ -1,7 +1,7 @@
 const GRAVITATIONAL_CONSTANT = 1000;
 const THRUSTER_FORCE = 100000;
 const PLAYER_START_MASS = 1000;
-const DECAY_PER_STEP = 0.001;
+const DECAY_PER_STEP = 0.0005;
 
 var Distance = function(x1, x2, y1, y2) {
   return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
@@ -237,7 +237,7 @@ window.setInterval(function() {
     x: RandomInt(0, canvas.width),
     y: RandomInt(0, canvas.height),
   };
-  var massMax = Math.max(Math.max(player1Body.mass, player2Body.mass) * 1.5, 0);
+  var massMax = Math.max(Math.max(player1Body.mass, player2Body.mass) * 0.99, 0);
   var mass = RandomInt(Math.min(10, massMax), massMax);
   universe.addBody(new Body("", '#FF0000', mass, pos, {x: 0, y: 0}));
 }, 1000 * 10);
@@ -249,7 +249,7 @@ window.setInterval(function() {
   };
   var mass = RandomInt(PLAYER_START_MASS * 0.1, PLAYER_START_MASS * 0.5);
   universe.addBody(new Body("", '#FF00FF', mass, pos, {x: 0, y: 0}));
-}, 1000);
+}, 500);
 
 $(function() {
     $(document).keydown(function(e) {
