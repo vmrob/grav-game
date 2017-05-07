@@ -34,8 +34,8 @@ class Universe {
   }
 
   step(duration) {
+    this.checkCollisions();
     this.applyForces();
-    // this.applyCollisions();
     for (var i in this.bodies) {
       this.bodies[i].step(duration);
     }
@@ -62,15 +62,24 @@ class Universe {
     }
   }
 
-  // applyCollisions() {
-  //   for (i = 0; i < this.bodies.length - 1; ++i) {
-  //     for (j = i + 1; j < this.bodies.length; ++j) {
-  //       if (this.bodies[i].collidesWith(this.bodies[j])) {
-  //
-  //       }
-  //     }
-  //   }
-  // }
+  checkCollisions() {
+    for (var i = 0; i < this.bodies.length - 1; ++i) {
+      for (var j = i + 1; j < this.bodies.length; ++j) {
+        if (this.bodies[i].collidesWith(this.bodies[j])) {
+          if (this.bodies[i].mass > this.bodies[j].mass) {
+            this.bodies[i].mergeWith(this.bodies[j]);
+            this.bodies.splice(j, 1);
+          } else {
+            this.bodies[j].mergeWith(this.bodies[i]);
+            this.bodies.splice(i, 1);
+          }
+          // need to reevaluate everything
+          this.checkCollisions();
+          return;
+        }
+      }
+    }
+  }
 
   draw() {
     for (var i in this.bodies) {
@@ -151,7 +160,20 @@ class Body {
   }
 
   collidesWith(body) {
-    return distanceTo(body) < this.radius + body.radius;
+    return this.distanceTo(body) < this.radius + body.radius;
+  }
+
+  mergeWith(body) {
+    this.velocity = {
+      x: (this.velocity.x * this.mass + body.velocity.x * body.mass) / (this.mass + body.mass),
+      y: (this.velocity.y * this.mass + body.velocity.y * body.mass) / (this.mass + body.mass),
+    }
+    // conservation of position?
+    this.pos = {
+      x: (this.pos.x * this.mass + body.pos.x * body.mass) / (this.mass + body.mass),
+      y: (this.pos.y * this.mass + body.pos.y * body.mass) / (this.mass + body.mass),
+    }
+    this.mass += body.mass;
   }
 };
 
