@@ -1,8 +1,16 @@
-const GRAVITATIONAL_CONSTANT = 1000;
-const THRUSTER_BASE_FORCE = 100000;
-const PLAYER_START_MASS = 1000;
+const GRAVITATIONAL_CONSTANT = 100;
+const THRUSTER_BASE_FORCE = 1000000;
+const PLAYER_START_MASS = 10000;
 const DECAY_PER_STEP = 0.0001;
 const MINIMUM_DECAY_MASS = PLAYER_START_MASS;
+const MINIMUM_DECAY_FORCE_QUANTITY = 500;
+const GAME_BOUNDS_X = -5000;
+const GAME_BOUNDS_WIDTH = 10000;
+const GAME_BOUNDS_Y = -5000;
+const GAME_BOUNDS_HEIGHT = 10000;
+const PLAYER_1_COLOR = '#cfcf80';
+const PLAYER_2_COLOR = '#80cfcf';
+const MATTER_REPULSION_FORCE = 100000;
 
 var Distance = function(x1, x2, y1, y2) {
   return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
@@ -38,9 +46,24 @@ class Vector {
   }
 }
 
+class Rect {
+  constructor(x, y, width, height) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+  }
+
+  contains(point) {
+    return point.x >= this.x && point.x <= this.x + this.width &&
+      point.y >= this.y && point.y <= this.y + this.height;
+  }
+}
+
 class Universe {
-  constructor(bodies) {
+  constructor(bodies, boundsRect) {
     this.bodies = bodies;
+    this.bounds = boundsRect;
   }
 
   addBody(body) {
@@ -79,7 +102,18 @@ class Universe {
 
   decayBodies() {
     for (var i in this.bodies) {
-      this.bodies[i].decay(DECAY_PER_STEP);
+      if (!this.bounds.contains(this.bodies[i].pos)) {
+        this.bodies[i].decay(DECAY_PER_STEP * 10, true);
+      } else {
+        this.bodies[i].decay(DECAY_PER_STEP);
+      }
+    }
+    for (var i = 0; i < this.bodies.length;) {
+      if (this.bodies[i].mass == 0) {
+        this.removeBody(i);
+      } else {
+        ++i;
+      }
     }
   }
 
@@ -89,10 +123,10 @@ class Universe {
         if (this.bodies[i].collidesWith(this.bodies[j])) {
           if (this.bodies[i].mass > this.bodies[j].mass) {
             this.bodies[i].mergeWith(this.bodies[j]);
-            this.bodies.splice(j, 1);
+            this.removeBody(j);
           } else {
             this.bodies[j].mergeWith(this.bodies[i]);
-            this.bodies.splice(i, 1);
+            this.removeBody(i);
           }
           // need to reevaluate everything
           this.checkCollisions();
@@ -102,11 +136,18 @@ class Universe {
     }
   }
 
+  removeBody(index) {
+    this.bodies.splice(index, 1);
+  }
+
   draw() {
     var min = new Vector(0, 0);
     var max = new Vector(context.canvas.width, context.canvas.height);
     var padding = 10;
     for (var i in this.bodies) {
+      if (this.bodies[i].static || this.bodies[i].npc) {
+        continue;
+      }
       var pos = this.bodies[i].pos;
       var r = this.bodies[i].radius;
       if (pos.x - r - padding < min.x) {
@@ -131,9 +172,15 @@ class Universe {
     for (var i in this.bodies) {
       this.bodies[i].draw(context);
     }
+    this.drawBounds(context);
 
     context.translate(min.x, min.y);
     context.scale(1.0 / scale, 1.0 / scale);
+  }
+
+  drawBounds(context) {
+    context.rect(this.bounds.x, this.bounds.y, this.bounds.width, this.bounds.height);
+    context.stroke();
   }
 };
 
@@ -153,11 +200,16 @@ class Body {
       y: 0,
     };
     this.static = false;
+    this.npc = false;
     this.cooldownActivationTime = 0;
   }
 
   get radius() {
-    return Math.sqrt(this.mass / Math.PI); // assume mass == area
+    var r = Math.cbrt((this.mass * 3) / (4 * Math.PI));
+    if (MATTER_REPULSION_FORCE < this.forceAtDistance(r)) {
+      return 0;
+    }
+    return r;
   }
 
   draw(ctx) {
@@ -223,8 +275,8 @@ class Body {
     };
   }
 
-  distanceTo(body) {
-    return Math.sqrt(Math.pow(this.pos.x - body.pos.x, 2) + Math.pow(this.pos.y - body.pos.y, 2));
+  distanceTo(pos) {
+    return Math.sqrt(Math.pow(this.pos.x - pos.x, 2) + Math.pow(this.pos.y - pos.y, 2));
   }
 
   vectorTo(body) {
@@ -236,12 +288,16 @@ class Body {
       return new Vector(0, 0);
     }
     var vec = this.vectorTo(body);
-    var force = GRAVITATIONAL_CONSTANT * this.mass * body.mass / Math.pow(this.distanceTo(body), 2);
+    var force = GRAVITATIONAL_CONSTANT * this.mass * body.mass / Math.pow(this.distanceTo(body.pos), 2);
     return vec.withMagnitude(force);
   }
 
+  forceAtDistance(distance) {
+    return GRAVITATIONAL_CONSTANT * this.mass / Math.pow(distance, 2);
+  }
+
   collidesWith(body) {
-    return this.distanceTo(body) < this.radius + body.radius;
+    return this.distanceTo(body.pos) < this.radius + body.radius;
   }
 
   mergeWith(body) {
@@ -261,9 +317,12 @@ class Body {
     body.mass = 0;
   }
 
-  decay(percent) {
+  decay(percent, force) {
+    var decayAmount = this.mass * percent;
     if (this.mass >= MINIMUM_DECAY_MASS) {
-      this.mass *= 1 - percent;
+      this.mass = Math.max(this.mass - decayAmount, 0);
+    } else if (force) {
+      this.mass = Math.max(this.mass - Math.max(decayAmount, MINIMUM_DECAY_FORCE_QUANTITY), 0);
     }
   }
 };
@@ -273,24 +332,32 @@ context = canvas.getContext("2d");
 
 var player1Body = new Body('Player 1', '#cfcf80', PLAYER_START_MASS, {x:  200, y: 350}, {x: 0, y: 0});
 var player2Body = new Body('Player 2', '#80cfcf', PLAYER_START_MASS, {x: 1000, y: 350}, {x: 0, y: 0});
-var universe = new Universe([player1Body, player2Body]);
+var gameBounds = new Rect(GAME_BOUNDS_X, GAME_BOUNDS_Y, GAME_BOUNDS_WIDTH, GAME_BOUNDS_HEIGHT)
+var universe = new Universe([player1Body, player2Body], gameBounds);
 
 function gameLoop() {
   universe.step(1 / 60);
   if (player1Body.mass == 0) {
     var pos = RandomPosition(canvas.width, canvas.height);
-    player1Body = new Body('Player 1', '#cfcf80', PLAYER_START_MASS, pos, {x: 0, y: 0});
+    player1Body = new Body('Player 1', PLAYER_1_COLOR, PLAYER_START_MASS, pos, {x: 0, y: 0});
     universe.addBody(player1Body);
   }
   if (player2Body.mass == 0) {
     var pos = RandomPosition(canvas.width, canvas.height);
-    player2Body = new Body('Player 2', '#80cfcf', PLAYER_START_MASS, pos, {x: 0, y: 0});
+    player2Body = new Body('Player 2', PLAYER_2_COLOR, PLAYER_START_MASS, pos, {x: 0, y: 0});
     universe.addBody(player2Body);
   }
 }
 
 window.setInterval(function() {
   universe.draw();
+  context.font = "15px Arial";
+  context.fillStyle = PLAYER_1_COLOR;
+  context.fillText(`Player 1: ${player1Body.mass.toPrecision('6')}`, canvas.width / 2 - 100, 20);
+
+  context.font = "15px Arial";
+  context.fillStyle = PLAYER_2_COLOR;
+  context.fillText(`Player 2: ${player2Body.mass.toPrecision('6')}`, canvas.width / 2 + 100, 20);
 }, 1000 / 30);
 
 window.setInterval(function() {
@@ -301,19 +368,30 @@ window.setInterval(function() {
   var pos = RandomPosition(canvas.width, canvas.height);
   var massMax = Math.min(Math.max(Math.max(player1Body.mass, player2Body.mass) * 0.99, 0), PLAYER_START_MASS * 10);
   var mass = RandomInt(Math.min(10, massMax), massMax);
-  universe.addBody(new Body("", '#FF0000', mass, pos, {x: 0, y: 0}));
+  var velocity = {
+    x: RandomInt(-100, 100),
+    y: RandomInt(-100, 100),
+  };
+  var body = new Body("", '#FF0000', mass, pos, velocity);
+  body.npc = true;
+  universe.addBody(body);
 }, 1000 * 10);
 
 window.setInterval(function() {
   var pos = {
-    x: RandomInt(0, canvas.width),
-    y: RandomInt(0, canvas.height),
+    x: gameBounds.x + RandomInt(0, gameBounds.width),
+    y: gameBounds.y + RandomInt(0, gameBounds.height),
   };
+  var velocity = {
+    x: RandomInt(-500, 500),
+    y: RandomInt(-500, 500),
+  }
   var mass = RandomInt(PLAYER_START_MASS * 0.1, PLAYER_START_MASS * 0.5);
-  var body = new Body("", '#FF00FF', mass, pos, {x: 0, y: 0})
-  body.static = true;
+  var body = new Body("", '#FF00FF', mass, pos, velocity);
+  // body.static = true;
+  body.npc = true;
   universe.addBody(body);
-}, 500);
+}, 100);
 
 $(function() {
     $(document).keydown(function(e) {
