@@ -10,7 +10,7 @@ const GAME_BOUNDS_Y = -5000;
 const GAME_BOUNDS_HEIGHT = 10000;
 const PLAYER_1_COLOR = '#cfcf80';
 const PLAYER_2_COLOR = '#80cfcf';
-const MATTER_REPULSION_FORCE = 100000;
+const GRID_LINE_INTERVAL = 250;
 
 var Distance = function(x1, x2, y1, y2) {
   return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
@@ -20,10 +20,10 @@ function RandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
-function RandomPosition(width, height) {
+function RandomBoardPosition() {
   return {
-    x: RandomInt(0, width),
-    y: RandomInt(0, height),
+    x: RandomInt(GAME_BOUNDS_X, GAME_BOUNDS_X + GAME_BOUNDS_WIDTH),
+    y: RandomInt(GAME_BOUNDS_Y, GAME_BOUNDS_Y + GAME_BOUNDS_HEIGHT),
   };
 }
 
@@ -163,12 +163,32 @@ class Universe {
           max.y = pos.y + r + padding;
       }
     }
+    min.y -= 500;
+    max.y += 500;
+    min.x -= 500;
+    max.x += 500;
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
     var scaleX = context.canvas.width / (max.x - min.x);
     var scaleY = context.canvas.height / (max.y - min.y);
     var scale = scaleX > scaleY ? scaleY : scaleX;
     context.scale(scale, scale);
     context.translate(-min.x, -min.y);
+
+    for (var x = GAME_BOUNDS_X; x < GAME_BOUNDS_X + GAME_BOUNDS_WIDTH; x += GRID_LINE_INTERVAL) {
+      context.beginPath();
+      context.strokeStyle = '#000000';
+      context.moveTo(x, GAME_BOUNDS_Y);
+      context.lineTo(x, GAME_BOUNDS_Y + GAME_BOUNDS_HEIGHT);
+      context.stroke();
+    }
+    for (var y = GAME_BOUNDS_Y; y < GAME_BOUNDS_Y + GAME_BOUNDS_HEIGHT; y += GRID_LINE_INTERVAL) {
+      context.beginPath();
+      context.strokeStyle = '#000000';
+      context.moveTo(GAME_BOUNDS_X, y);
+      context.lineTo(GAME_BOUNDS_X + GAME_BOUNDS_WIDTH, y);
+      context.stroke();
+    }
+
     for (var i in this.bodies) {
       this.bodies[i].draw(context);
     }
@@ -205,11 +225,7 @@ class Body {
   }
 
   get radius() {
-    var r = Math.cbrt((this.mass * 3) / (4 * Math.PI));
-    if (MATTER_REPULSION_FORCE < this.forceAtDistance(r)) {
-      return 0;
-    }
-    return r;
+    return Math.cbrt((this.mass * 3) / (4 * Math.PI));
   }
 
   draw(ctx) {
@@ -338,12 +354,12 @@ var universe = new Universe([player1Body, player2Body], gameBounds);
 function gameLoop() {
   universe.step(1 / 60);
   if (player1Body.mass == 0) {
-    var pos = RandomPosition(canvas.width, canvas.height);
+    var pos = RandomBoardPosition();
     player1Body = new Body('Player 1', PLAYER_1_COLOR, PLAYER_START_MASS, pos, {x: 0, y: 0});
     universe.addBody(player1Body);
   }
   if (player2Body.mass == 0) {
-    var pos = RandomPosition(canvas.width, canvas.height);
+    var pos = RandomBoardPosition();
     player2Body = new Body('Player 2', PLAYER_2_COLOR, PLAYER_START_MASS, pos, {x: 0, y: 0});
     universe.addBody(player2Body);
   }
@@ -365,8 +381,8 @@ window.setInterval(function() {
 }, 1000 / 60);
 
 window.setInterval(function() {
-  var pos = RandomPosition(canvas.width, canvas.height);
-  var massMax = Math.min(Math.max(Math.max(player1Body.mass, player2Body.mass) * 0.99, 0), PLAYER_START_MASS * 10);
+  var pos = RandomBoardPosition();
+  var massMax = Math.min(Math.max(player1Body.mass * 2.0, player2Body.mass * 2.0, 0), PLAYER_START_MASS * 10);
   var mass = RandomInt(Math.min(10, massMax), massMax);
   var velocity = {
     x: RandomInt(-100, 100),
@@ -375,13 +391,10 @@ window.setInterval(function() {
   var body = new Body("", '#FF0000', mass, pos, velocity);
   body.npc = true;
   universe.addBody(body);
-}, 1000 * 10);
+}, 1000 * 5);
 
 window.setInterval(function() {
-  var pos = {
-    x: gameBounds.x + RandomInt(0, gameBounds.width),
-    y: gameBounds.y + RandomInt(0, gameBounds.height),
-  };
+  var pos = RandomBoardPosition();
   var velocity = {
     x: RandomInt(-500, 500),
     y: RandomInt(-500, 500),
