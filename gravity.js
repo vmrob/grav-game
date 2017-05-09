@@ -1,5 +1,5 @@
 const GRAVITATIONAL_CONSTANT = 100;
-const THRUSTER_BASE_FORCE = 1000000;
+const THRUSTER_BASE_FORCE = 5000000;
 const PLAYER_START_MASS = 10000;
 const DECAY_PER_STEP = 0.0001;
 const MINIMUM_DECAY_MASS = PLAYER_START_MASS;
@@ -140,33 +140,38 @@ class Universe {
     this.bodies.splice(index, 1);
   }
 
-  draw() {
+  draw(context, focus) {
     var min = new Vector(0, 0);
     var max = new Vector(context.canvas.width, context.canvas.height);
-    var padding = 10;
-    for (var i in this.bodies) {
-      if (this.bodies[i].static || this.bodies[i].npc) {
-        continue;
-      }
-      var pos = this.bodies[i].pos;
-      var r = this.bodies[i].radius;
-      if (pos.x - r - padding < min.x) {
-          min.x = pos.x - r - padding;
-      }
-      if (pos.y - r - padding < min.y) {
-          min.y = pos.y - r - padding;
-      }
-      if (pos.x + r + padding > max.x) {
-          max.x = pos.x + r + padding;
-      }
-      if (pos.y + r + padding > max.y) {
-          max.y = pos.y + r + padding;
+
+    if (focus) {
+      var r = focus.radius;
+      min.x = focus.pos.x - r * 30;
+      max.x = focus.pos.x + r * 30;
+      min.y = focus.pos.y - r * 30;
+      max.y = focus.pos.y + r * 30;
+    } else {
+      var padding = 500;
+      for (var i in this.bodies) {
+        if (this.bodies[i].static || this.bodies[i].npc) {
+          continue;
+        }
+        var pos = this.bodies[i].pos;
+        var r = this.bodies[i].radius;
+        if (pos.x - r - padding < min.x) {
+            min.x = pos.x - r - padding;
+        }
+        if (pos.y - r - padding < min.y) {
+            min.y = pos.y - r - padding;
+        }
+        if (pos.x + r + padding > max.x) {
+            max.x = pos.x + r + padding;
+        }
+        if (pos.y + r + padding > max.y) {
+            max.y = pos.y + r + padding;
+        }
       }
     }
-    min.y -= 500;
-    max.y += 500;
-    min.x -= 500;
-    max.x += 500;
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
     var scaleX = context.canvas.width / (max.x - min.x);
     var scaleY = context.canvas.height / (max.y - min.y);
@@ -343,8 +348,10 @@ class Body {
   }
 };
 
-canvas = document.getElementById('gameCanvas')
-context = canvas.getContext("2d");
+player1Canvas = document.getElementById('gameCanvasPlayer1');
+player1Context = player1Canvas.getContext("2d");
+player2Canvas = document.getElementById('gameCanvasPlayer2');
+player2Context = player2Canvas.getContext("2d");
 
 var player1Body = new Body('Player 1', '#cfcf80', PLAYER_START_MASS, {x:  200, y: 350}, {x: 0, y: 0});
 var player2Body = new Body('Player 2', '#80cfcf', PLAYER_START_MASS, {x: 1000, y: 350}, {x: 0, y: 0});
@@ -366,14 +373,15 @@ function gameLoop() {
 }
 
 window.setInterval(function() {
-  universe.draw();
-  context.font = "15px Arial";
-  context.fillStyle = PLAYER_1_COLOR;
-  context.fillText(`Player 1: ${player1Body.mass.toPrecision('6')}`, canvas.width / 2 - 100, 20);
+  universe.draw(player1Context, player1Body);
+  player1Context.font = "15px Arial";
+  player1Context.fillStyle = PLAYER_1_COLOR;
+  player1Context.fillText(`Player 1: ${player1Body.mass.toPrecision('6')}`, player1Canvas.width / 2 - 100, 20);
 
-  context.font = "15px Arial";
-  context.fillStyle = PLAYER_2_COLOR;
-  context.fillText(`Player 2: ${player2Body.mass.toPrecision('6')}`, canvas.width / 2 + 100, 20);
+  universe.draw(player2Context, player2Body);
+  player2Context.font = "15px Arial";
+  player2Context.fillStyle = PLAYER_2_COLOR;
+  player2Context.fillText(`Player 2: ${player2Body.mass.toPrecision('6')}`, player2Canvas.width / 2 + 100, 20);
 }, 1000 / 30);
 
 window.setInterval(function() {
@@ -398,7 +406,7 @@ window.setInterval(function() {
   var velocity = {
     x: RandomInt(-500, 500),
     y: RandomInt(-500, 500),
-  }
+  };
   var mass = RandomInt(PLAYER_START_MASS * 0.1, PLAYER_START_MASS * 0.5);
   var body = new Body("", '#FF00FF', mass, pos, velocity);
   // body.static = true;
