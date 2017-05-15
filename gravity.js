@@ -61,13 +61,23 @@ class Rect {
 }
 
 class Universe {
-  constructor(bodies, boundsRect) {
-    this.bodies = bodies;
+  constructor(boundsRect) {
+    this.bodies = {};
     this.bounds = boundsRect;
   }
 
   addBody(body) {
-    this.bodies.push(body);
+    var id = Universe.NextBodyId();
+    this.bodies[id] = body;
+    return id;
+  }
+
+  getBody(id) {
+    return id in this.bodies ? this.bodies[id] : null;
+  }
+
+  static NextBodyId() {
+    return Universe._gNextBodyId++;
   }
 
   step(duration) {
@@ -108,18 +118,25 @@ class Universe {
         this.bodies[i].decay(DECAY_PER_STEP);
       }
     }
-    for (var i = 0; i < this.bodies.length;) {
+    var idsToRemove = [];
+    for (var i in this.bodies) {
       if (this.bodies[i].mass == 0) {
-        this.removeBody(i);
-      } else {
-        ++i;
+        idsToRemove.push(i);
       }
+    }
+    for (var i in idsToRemove) {
+      this.removeBody(idsToRemove[i]);
     }
   }
 
   checkCollisions() {
-    for (var i = 0; i < this.bodies.length - 1; ++i) {
-      for (var j = i + 1; j < this.bodies.length; ++j) {
+    for (var i in this.bodies) {
+      for (var j in this.bodies) {
+        if (i <= j) {
+          // We only need to perform a single comparison for every (i, j) pair
+          // and only if i != j.
+          continue;
+        }
         if (this.bodies[i].collidesWith(this.bodies[j])) {
           if (this.bodies[i].mass > this.bodies[j].mass) {
             this.bodies[i].mergeWith(this.bodies[j]);
@@ -137,7 +154,7 @@ class Universe {
   }
 
   removeBody(index) {
-    this.bodies.splice(index, 1);
+    delete this.bodies[index];
   }
 
   draw(context, focus) {
@@ -209,6 +226,8 @@ class Universe {
   }
 };
 
+Universe._gNextBodyId = 1;
+
 class Body {
   constructor(label, color, mass, pos, velocity) {
     this.label = label;
@@ -266,7 +285,7 @@ class Body {
     var cooldownActive = this.cooldownActivationTime > new Date().getTime() - 5000;
     var gravityInfluence = cooldownActive ? 0.1 : 1.0;
     var f = new Vector(this.gravitationalForce.x * gravityInfluence, this.gravitationalForce.y * gravityInfluence);
-    var thrusterForce = (cooldownActive ? 2.0 : 1.0) * THRUSTER_BASE_FORCE * (2 + this.mass) / (PLAYER_START_MASS * 2);
+    var thrusterForce = (cooldownActive ? 2.0 : 1.0) * THRUSTER_BASE_FORCE * (10000 + this.mass) / (PLAYER_START_MASS * 4);
     if (this.leftThrusterEnabled) {
         f.x += thrusterForce;
     }
@@ -348,50 +367,32 @@ class Body {
   }
 };
 
-player1Canvas = document.getElementById('gameCanvasPlayer1');
-player1Context = player1Canvas.getContext("2d");
-player2Canvas = document.getElementById('gameCanvasPlayer2');
-player2Context = player2Canvas.getContext("2d");
+var canvas = document.getElementById('gameCanvas');
+var context = canvas.getContext("2d");
 
-var player1Body = new Body('Player 1', '#cfcf80', PLAYER_START_MASS, {x:  200, y: 350}, {x: 0, y: 0});
-var player2Body = new Body('Player 2', '#80cfcf', PLAYER_START_MASS, {x: 1000, y: 350}, {x: 0, y: 0});
-var gameBounds = new Rect(GAME_BOUNDS_X, GAME_BOUNDS_Y, GAME_BOUNDS_WIDTH, GAME_BOUNDS_HEIGHT)
-var universe = new Universe([player1Body, player2Body], gameBounds);
+var universe = new Universe(new Rect(GAME_BOUNDS_X, GAME_BOUNDS_Y, GAME_BOUNDS_WIDTH, GAME_BOUNDS_HEIGHT));
 
-function gameLoop() {
+playerBodyId = null;
+
+function NewPlayer(universe) {
+  return universe.addBody(new Body('Player 1', '#cfcf80', PLAYER_START_MASS, RandomBoardPosition(), {x: 0, y: 0}));
+}
+
+function ServerLoop(universe) {
   universe.step(1 / 60);
-  if (player1Body.mass == 0) {
-    var pos = RandomBoardPosition();
-    player1Body = new Body('Player 1', PLAYER_1_COLOR, PLAYER_START_MASS, pos, {x: 0, y: 0});
-    universe.addBody(player1Body);
-  }
-  if (player2Body.mass == 0) {
-    var pos = RandomBoardPosition();
-    player2Body = new Body('Player 2', PLAYER_2_COLOR, PLAYER_START_MASS, pos, {x: 0, y: 0});
-    universe.addBody(player2Body);
+  if (universe.getBody(playerBodyId) === null) {
+    playerBodyId = NewPlayer(universe);
   }
 }
 
-window.setInterval(function() {
-  universe.draw(player1Context, player1Body);
-  player1Context.font = "15px Arial";
-  player1Context.fillStyle = PLAYER_1_COLOR;
-  player1Context.fillText(`Player 1: ${player1Body.mass.toPrecision('6')}`, player1Canvas.width / 2 - 100, 20);
-
-  universe.draw(player2Context, player2Body);
-  player2Context.font = "15px Arial";
-  player2Context.fillStyle = PLAYER_2_COLOR;
-  player2Context.fillText(`Player 2: ${player2Body.mass.toPrecision('6')}`, player2Canvas.width / 2 + 100, 20);
-}, 1000 / 30);
-
-window.setInterval(function() {
-  gameLoop();
-}, 1000 / 60);
-
-window.setInterval(function() {
+function AddLargeBody(universe) {
   var pos = RandomBoardPosition();
-  var massMax = Math.min(Math.max(player1Body.mass * 2.0, player2Body.mass * 2.0, 0), PLAYER_START_MASS * 10);
-  var mass = RandomInt(Math.min(10, massMax), massMax);
+  var playerBody = universe.getBody(playerBodyId);
+  var maxMass = 0
+  if (playerBody) {
+    maxMass = Math.min(Math.max((playerBody.mass ? playerBody.mass : PLAYER_START_MASS) * 2.0, 0), PLAYER_START_MASS * 10);
+  }
+  var mass = RandomInt(Math.min(10, maxMass), maxMass);
   var velocity = {
     x: RandomInt(-100, 100),
     y: RandomInt(-100, 100),
@@ -399,9 +400,9 @@ window.setInterval(function() {
   var body = new Body("", '#FF0000', mass, pos, velocity);
   body.npc = true;
   universe.addBody(body);
-}, 1000 * 5);
+}
 
-window.setInterval(function() {
+function AddFoodBody(universe) {
   var pos = RandomBoardPosition();
   var velocity = {
     x: RandomInt(-500, 500),
@@ -412,40 +413,51 @@ window.setInterval(function() {
   // body.static = true;
   body.npc = true;
   universe.addBody(body);
+}
+
+window.setInterval(function() {
+  var playerBody = universe.getBody(playerBodyId);
+  universe.draw(context, playerBody ? playerBody : null);
+  context.font = "15px Arial";
+  context.fillStyle = PLAYER_1_COLOR;
+  context.fillText(`Player 1: ${playerBody ? playerBody.mass.toPrecision('6') : 0}`, canvas.width / 2 - 100, 20);
+}, 1000 / 30);
+
+window.setInterval(function() {
+  ServerLoop(universe);
+}, 1000 / 60);
+
+window.setInterval(function() {
+  AddLargeBody(universe);
+}, 1000 * 5);
+
+window.setInterval(function() {
+  AddFoodBody(universe);
 }, 100);
 
 $(function() {
     $(document).keydown(function(e) {
+        playerBody = universe.getBody(playerBodyId);
+        if (!playerBody) {
+            return;
+        }
         switch (e.which) {
-            case 65: // a
-                player1Body.rightThrusterEnabled = true;
-                break;
-            case 87: // w
-                player1Body.bottomThrusterEnabled = true;
-                break;
-            case 68: // d
-                player1Body.leftThrusterEnabled = true;
-                break;
-            case 83: // s
-                player1Body.topThrusterEnabled = true;
-                break;
             case 37: // left
-                player2Body.rightThrusterEnabled = true;
+                playerBody.rightThrusterEnabled = true;
                 break;
             case 38: // up
-                player2Body.bottomThrusterEnabled = true;
+                playerBody.bottomThrusterEnabled = true;
                 break;
             case 39: // right
-                player2Body.leftThrusterEnabled = true;
+                playerBody.leftThrusterEnabled = true;
                 break;
             case 40: // down
-                player2Body.topThrusterEnabled = true;
+                playerBody.topThrusterEnabled = true;
                 break;
             case 16: // shift
-                var body = e.originalEvent.code == "ShiftLeft" ? player1Body : player2Body;
-                body.mass *= 0.5;
-                body.cooldownActivationTime = new Date().getTime();
-                body.velocity = new Vector(0, 0);
+                playerBody.mass *= 0.5;
+                playerBody.cooldownActivationTime = new Date().getTime();
+                playerBody.velocity = new Vector(0, 0);
             default:
                 return;
         }
@@ -453,30 +465,22 @@ $(function() {
     });
 
     $(document).keyup(function(e) {
+        playerBody = universe.getBody(playerBodyId);
+        if (!playerBody) {
+            return;
+        }
         switch (e.which) {
-            case 65: // a
-                player1Body.rightThrusterEnabled = false;
-                break;
-            case 87: // w
-                player1Body.bottomThrusterEnabled = false;
-                break;
-            case 68: // d
-                player1Body.leftThrusterEnabled = false;
-                break;
-            case 83: // s
-                player1Body.topThrusterEnabled = false;
-                break;
             case 37: // left
-                player2Body.rightThrusterEnabled = false;
+                playerBody.rightThrusterEnabled = false;
                 break;
             case 38: // up
-                player2Body.bottomThrusterEnabled = false;
+                playerBody.bottomThrusterEnabled = false;
                 break;
             case 39: // right
-                player2Body.leftThrusterEnabled = false;
+                playerBody.leftThrusterEnabled = false;
                 break;
             case 40: // down
-                player2Body.topThrusterEnabled = false;
+                playerBody.topThrusterEnabled = false;
                 break;
             default:
                 return;
