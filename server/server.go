@@ -197,6 +197,7 @@ var indexTemplate = template.Must(template.New("").Parse(`
 		class Universe {
 			constructor() {
 				this.state = null;
+				this.player = null;
 			}
 
 			draw(context) {
@@ -299,19 +300,36 @@ var indexTemplate = template.Must(template.New("").Parse(`
 		var context = canvas.getContext("2d");
 		var universe = new Universe()
 
-		function update(state) {
-			universe.state = state;
-			universe.draw(context);
-		}
-
 		var ws = new WebSocket('ws://127.0.0.1:8080/game');
 		ws.onmessage = function(e) {
 			document.getElementById('message').innerText = e.data;
-			update(JSON.parse(e.data)["Universe"])
+			json = JSON.parse(e.data)
+			universe.state = json["Universe"]
+			//universe.player = json["Player"]["Id"]
+			universe.draw(context);
 		};
 		ws.onerror = function(e) {
 			document.getElementById('message').innerText = 'unable to connect';
 		};
+
+    $(document).keyup(function(e) {
+			if (universe.player == null) {
+				return;
+			}
+			switch (e.which) {
+				case 37: // left
+					break;
+				case 38: // up
+					break;
+				case 39: // right
+					break;
+				case 40: // down
+					break;
+				default:
+					return;
+			}
+			e.preventDefault();
+    });
 		</script>
 	</body>
 </html>
