@@ -12,7 +12,7 @@ type Body struct {
 	Static             bool
 	Velocity           Vector
 	GravitationalForce Vector
-	AdditionalForce    Vector
+	Thrust             Vector
 	NetForce           Vector
 }
 
@@ -78,7 +78,7 @@ func (b *Body) updateRadius() {
 }
 
 func (b *Body) updateNetForce(d time.Duration) {
-	b.NetForce = b.GravitationalForce.Add(b.AdditionalForce)
+	b.NetForce = b.GravitationalForce.Add(b.Thrust)
 }
 
 func (b *Body) updateVelocity(d time.Duration) {
@@ -98,4 +98,10 @@ func (b *Body) updatePosition(d time.Duration) {
 	}
 	b.Position.X += b.Velocity.X * d.Seconds()
 	b.Position.Y += b.Velocity.Y * d.Seconds()
+}
+
+func (b *Body) ThrustEvent(t Vector) func() {
+	return func() {
+		b.Thrust = t.WithMagnitude(thrustBaseMagnitude)
+	}
 }

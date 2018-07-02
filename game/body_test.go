@@ -108,3 +108,10 @@ func TestGravitationalForceTo(t *testing.T) {
 	assert.Equal(t, Vector{0, 0}, b1.GravitationalForceTo(&b3))
 	assert.Equal(t, Vector{0, 0}, b3.GravitationalForceTo(&b1))
 }
+
+func TestThrustEvent(t *testing.T) {
+	b := Body{}
+	assert.Equal(t, Vector{0, 0}, b.Thrust)
+	b.ThrustEvent(North)()
+	assert.Equal(t, Vector{0, thrustBaseMagnitude}, b.Thrust)
+}
