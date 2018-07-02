@@ -52,7 +52,7 @@ func TestServer(t *testing.T) {
 	require.NoError(t, err)
 	defer client.Close()
 
-	var msg WebSocketMessage
+	var msg WebSocketOutput
 	assignedBodyId := ""
 	for i := 0; assignedBodyId == "" && i < 30; i++ {
 		assert.NoError(t, client.ReadJSON(&msg))

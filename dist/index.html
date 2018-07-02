@@ -154,9 +154,41 @@
 			}
 		}
 
+		class PlayerState {
+			constructor() {
+				this.topThrustEnabled = false;
+				this.bottomThrustEnabled = false;
+				this.leftThrustEnabled = false;
+				this.rightThrustEnabled = false;
+			}
+
+			render() {
+				var state = {
+					Thrust: {
+						x: 0.0,
+						y: 0.0,
+					},
+				};
+				if (this.topThrustEnabled) {
+					state.Thrust.y += 1.0;
+				}
+				if (this.bottomThrustEnabled) {
+					state.Thrust.y -= 1.0;
+				}
+				if (this.leftThrustEnabled) {
+					state.Thrust.x -= 1.0;
+				}
+				if (this.rightThrustEnabled) {
+					state.Thrust.x += 1.0;
+				}
+				return state
+			}
+		}
+
 		var canvas = document.getElementById('gameCanvas');
 		var context = canvas.getContext("2d");
 		var universe = new Universe()
+		var playerState = new PlayerState()
 
 		var playerBodyId = null;
 
@@ -172,6 +204,7 @@
 			const data = JSON.parse(e.data);
 			if (data["GameState"]) {
 				update(data["GameState"]["Universe"]);
+				ws.send(JSON.stringify(playerState.render()));
 			}
 			if (data["AssignedBodyId"]) {
 				playerBodyId = data["AssignedBodyId"];
@@ -180,6 +213,52 @@
 		ws.onerror = function(e) {
 			document.getElementById('message').innerText = 'unable to connect';
 		};
+
+    $(document).keydown(function(e) {
+			if (playerBodyId == null) {
+				return;
+			}
+			switch (e.which) {
+				case 37: // left
+					playerState.leftThrustEnabled = true;
+					break;
+				case 38: // up
+					playerState.topThrustEnabled = true;
+					break;
+				case 39: // right
+					playerState.rightThrustEnabled = true;
+					break;
+				case 40: // down
+					playerState.bottomThrustEnabled = true;
+					break;
+				default:
+					return;
+			}
+			e.preventDefault();
+    });
+
+    $(document).keyup(function(e) {
+			if (playerBodyId == null) {
+				return;
+			}
+			switch (e.which) {
+				case 37: // left
+					playerState.leftThrustEnabled = false;
+					break;
+				case 38: // up
+					playerState.topThrustEnabled = false;
+					break;
+				case 39: // right
+					playerState.rightThrustEnabled = false;
+					break;
+				case 40: // down
+					playerState.bottomThrustEnabled = false;
+					break;
+				default:
+					return;
+			}
+			e.preventDefault();
+    });
 		</script>
 	</body>
 </html>

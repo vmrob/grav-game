@@ -127,6 +127,6 @@ func (ws *WebSocket) readLoop() {
 			ws.universe.AddEvent(ws.body.ThrustEvent(*msg.Thrust))
 		}
 
-		ws.logger.Info("received message: %v", msg)
+		ws.logger.Infof("received message: %v", msg)
 	}
 }
