@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"math/rand"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,17 +16,14 @@ import (
 func main() {
 	logger := logrus.StandardLogger()
 
-	universe := game.NewUniverse(game.Rect{X: -1000, Y: -1000, W: 2000, H: 2000})
-	universe.AddBody(&game.Body{
-		Position: game.Point{0, 100},
-		Mass:     200,
-		Velocity: game.Vector{5, 0},
-	})
-	universe.AddBody(&game.Body{
-		Position: game.Point{0, -100},
-		Mass:     200,
-		Velocity: game.Vector{-5, 0},
-	})
+	universe := game.NewUniverse(game.Rect{X: -10000, Y: -10000, W: 20000, H: 20000})
+	for i := 0; i < 10; i++ {
+		universe.AddBody(&game.Body{
+			Position: game.Point{rand.Float64()*20000 - 10000, rand.Float64()*20000 - 10000},
+			Mass:     rand.Float64() * 1000000,
+			Velocity: game.Vector{rand.Float64()*1000 - 500, rand.Float64()*1000 - 500},
+		})
+	}
 
 	s := server.NewServer(logger, universe)
 	defer s.Close()

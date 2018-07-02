@@ -83,6 +83,7 @@ func (s *Server) tick() {
 			delete(s.webSockets, ws)
 			continue
 		}
+
 		ws.Send(&gameState)
 	}
 }
@@ -141,10 +142,10 @@ var indexTemplate = template.Must(template.New("").Parse(`
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 	</head>
 	<body>
-		<span id="message"></span>
 		<center>
 			<canvas id="gameCanvas" width="1200" height="700" style="border:1px solid #000000;"></canvas>
 		</center>
+		<span id="message"></span>
 		<script>
 		const GRID_LINE_INTERVAL = 250;
 
@@ -185,7 +186,7 @@ var indexTemplate = template.Must(template.New("").Parse(`
 				var min = new Vector(0, 0);
 				var max = new Vector(context.canvas.width, context.canvas.height);
 
-				var padding = 500;
+				var padding = 100;
 				for (const [id, body] of Object.entries(this.state["Bodies"])) {
 					if (body["Static"]) {
 						continue;
@@ -287,6 +288,7 @@ var indexTemplate = template.Must(template.New("").Parse(`
 		var ws = new WebSocket('ws://127.0.0.1:8080/game');
 		ws.onmessage = function(e) {
 			document.getElementById('message').innerText = e.data;
+			console.log(e)
 			update(JSON.parse(e.data)["Universe"])
 		};
 		ws.onerror = function(e) {
