@@ -17,7 +17,7 @@ func main() {
 	logger := logrus.StandardLogger()
 
 	universe := game.NewUniverse(game.Rect{X: -10000, Y: -10000, W: 20000, H: 20000})
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 500; i++ {
 		universe.AddBody(&game.Body{
 			Position: game.Point{rand.Float64()*20000 - 10000, rand.Float64()*20000 - 10000},
 			Mass:     rand.Float64() * 1000000,

@@ -1,7 +1,7 @@
 package game
 
 const decayPerStep = 0.0001
-const outOfBoundsDecayPerStep = 0.001
+const outOfBoundsDecayPerStep = 0.01
 const playerStartMass = 10000
 const minDecayMass = playerStartMass
 const minDecayMassForced = 500

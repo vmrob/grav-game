@@ -36,5 +36,9 @@ func (v Vector) MagnitudeSquared() float64 {
 }
 
 func (v Vector) WithMagnitude(m float64) Vector {
-	return v.Scale(m / v.Magnitude())
+	current := v.Magnitude()
+	if current == 0.0 {
+		panic("cannot use WithMagnitude on a zero Vector")
+	}
+	return v.Scale(m / current)
 }

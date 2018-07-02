@@ -147,7 +147,7 @@ var indexTemplate = template.Must(template.New("").Parse(`
 		</center>
 		<span id="message"></span>
 		<script>
-		const GRID_LINE_INTERVAL = 250;
+		const GRID_LINE_INTERVAL = 1000;
 
 		class Rect {
 			constructor(x, y, width, height) {
@@ -219,6 +219,7 @@ var indexTemplate = template.Must(template.New("").Parse(`
 				for (var x = bounds.x; x < bounds.x + bounds.width; x += GRID_LINE_INTERVAL) {
 					context.beginPath();
 					context.strokeStyle = '#000000';
+					context.lineWidth = 10;
 					context.moveTo(x, bounds.y);
 					context.lineTo(x, bounds.y + bounds.height);
 					context.stroke();
@@ -226,6 +227,7 @@ var indexTemplate = template.Must(template.New("").Parse(`
 				for (var y = bounds.y; y < bounds.y + bounds.height; y += GRID_LINE_INTERVAL) {
 					context.beginPath();
 					context.strokeStyle = '#000000';
+					context.lineWidth = 10;
 					context.moveTo(bounds.x, y);
 					context.lineTo(bounds.x + bounds.width, y);
 					context.stroke();
@@ -288,7 +290,6 @@ var indexTemplate = template.Must(template.New("").Parse(`
 		var ws = new WebSocket('ws://127.0.0.1:8080/game');
 		ws.onmessage = function(e) {
 			document.getElementById('message').innerText = e.data;
-			console.log(e)
 			update(JSON.parse(e.data)["Universe"])
 		};
 		ws.onerror = function(e) {

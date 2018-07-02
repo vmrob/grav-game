@@ -102,6 +102,9 @@ func (b *Body) updateVelocity(d time.Duration) {
 	if b.Static {
 		return
 	}
+	if b.Mass == 0 {
+		panic("updateVelocity called on zero-mass body")
+	}
 	b.Velocity.X += b.NetForce.X / b.Mass * d.Seconds()
 	b.Velocity.Y += b.NetForce.Y / b.Mass * d.Seconds()
 }

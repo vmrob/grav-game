@@ -67,7 +67,7 @@ func (ws *WebSocket) writeLoop() {
 			if !websocket.IsCloseError(err) || websocket.IsUnexpectedCloseError(err, websocket.CloseAbnormalClosure, websocket.CloseGoingAway) {
 				ws.logger.Error(errors.Wrap(err, "websocket write error"))
 			} else {
-				ws.logger.Info("client disconnecting")
+				ws.logger.Info(errors.Wrap(err, "client disconnecting"))
 			}
 			break
 		}

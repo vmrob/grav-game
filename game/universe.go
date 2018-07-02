@@ -78,7 +78,7 @@ func (u *Universe) checkCollisions() {
 					body.MergeWith(other)
 					u.RemoveBody(otherId)
 				} else {
-					other.MergeWith(other)
+					other.MergeWith(body)
 					u.RemoveBody(id)
 				}
 				// TODO: this could be a lot better
