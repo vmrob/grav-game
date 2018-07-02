@@ -28,17 +28,17 @@ type Server struct {
 }
 
 func DefaultUniverse() *game.Universe {
-	universe := game.NewUniverse(game.Rect{X: -10000, Y: -10000, W: 20000, H: 20000})
+	universe := game.NewUniverse(game.Rect{X: -1000, Y: -1000, W: 2000, H: 2000})
 	for i := 0; i < 50; i++ {
 		universe.AddBody(&game.Body{
 			Position: game.Point{
-				X: rand.Float64()*20000 - 10000,
-				Y: rand.Float64()*20000 - 10000,
+				X: rand.Float64()*2000 - 1000,
+				Y: rand.Float64()*2000 - 1000,
 			},
-			Mass: rand.Float64() * 1000000,
+			Mass: rand.Float64() * 10000,
 			Velocity: game.Vector{
-				X: rand.Float64()*1000 - 500,
-				Y: rand.Float64()*1000 - 500,
+				X: rand.Float64()*100 - 50,
+				Y: rand.Float64()*100 - 50,
 			},
 		})
 	}

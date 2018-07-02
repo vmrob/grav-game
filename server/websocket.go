@@ -47,7 +47,7 @@ func NewWebSocket(logger logrus.FieldLogger, conn *websocket.Conn, universe *gam
 		universe:      universe,
 		body: &game.Body{
 			Position: game.Point{X: bounds.X + rand.Float64()*bounds.W, Y: bounds.Y + rand.Float64()*bounds.H},
-			Mass:     10000,
+			Mass:     game.PlayerStartMass,
 		},
 	}
 	go ret.writeLoop()

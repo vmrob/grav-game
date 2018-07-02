@@ -41,7 +41,7 @@ func TestRemoveBody(t *testing.T) {
 func TestInBoundsDecay(t *testing.T) {
 	u := NewUniverse(Rect{X: 0, Y: 0, W: 100, H: 100})
 
-	startingMass := playerStartMass * 2.0
+	startingMass := PlayerStartMass * 2.0
 	b := Body{
 		Position: Point{X: 50, Y: 50},
 		Mass:     startingMass,
@@ -56,7 +56,7 @@ func TestInBoundsDecay(t *testing.T) {
 func TestOutOfBoundsDecay(t *testing.T) {
 	u := NewUniverse(Rect{X: 0, Y: 0, W: 100, H: 100})
 
-	startingMass := playerStartMass * 2.0
+	startingMass := PlayerStartMass * 2.0
 	b := Body{
 		Position: Point{X: 150, Y: 150},
 		Mass:     startingMass,
