@@ -26,6 +26,7 @@ func (b *Body) Decay(pct float64) {
 }
 
 func (b *Body) ForceDecay(pct float64) {
+	// TODO: this should be cleaned up
 	qty := b.Mass * pct
 	if b.Mass >= minDecayMass {
 		b.Mass -= math.Min(qty, b.Mass)
