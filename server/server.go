@@ -94,7 +94,7 @@ func (s *Server) tick() {
 			continue
 		}
 
-		ws.Send(&WebSocketMessage{
+		ws.Send(&WebSocketOutput{
 			GameState: &gameState,
 		})
 	}
@@ -134,19 +134,8 @@ func (s *Server) gameHandler(w http.ResponseWriter, r *http.Request) {
 	ws := NewWebSocket(logger, conn, s.universe)
 
 	s.webSocketsMutex.Lock()
+	defer s.webSocketsMutex.Unlock()
 	s.webSockets[ws] = struct{}{}
-	s.webSocketsMutex.Unlock()
-
-	bounds := s.universe.Bounds()
-	body := &game.Body{
-		Position: game.Point{X: bounds.X + rand.Float64()*bounds.W, Y: bounds.Y + rand.Float64()*bounds.H},
-		Mass:     10000,
-	}
-	s.universe.AddEvent(func() {
-		ws.Send(&WebSocketMessage{
-			AssignedBodyId: s.universe.AddBody(body).String(),
-		})
-	})
 }
 
 func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {

@@ -109,6 +109,10 @@ func (b *Body) updatePosition(d time.Duration) {
 
 func (b *Body) ThrustEvent(t Vector) func() {
 	return func() {
-		b.Thrust = t.WithMagnitude(thrustBaseMagnitude)
+		if t.MagnitudeSquared() == 0.0 {
+			b.Thrust = t
+		} else {
+			b.Thrust = t.WithMagnitude(thrustBaseMagnitude)
+		}
 	}
 }
