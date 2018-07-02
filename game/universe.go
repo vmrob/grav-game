@@ -19,6 +19,14 @@ func NewUniverse(bounds Rect) *Universe {
 	}
 }
 
+func (u *Universe) Bounds() Rect {
+	return u.bounds
+}
+
+func (u *Universe) Bodies() map[BodyId]*Body {
+	return u.bodies
+}
+
 func (u *Universe) AddBody(b *Body) BodyId {
 	id := u.nextId
 	u.nextId++

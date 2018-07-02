@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"net"
 	"net/http"
 	"testing"
@@ -57,7 +56,7 @@ func TestServer(t *testing.T) {
 	require.NoError(t, err)
 	defer client.Close()
 
-	var msg json.RawMessage
+	var msg GameStateMessage
 	assert.NoError(t, client.ReadJSON(&msg))
 	assert.NoError(t, client.ReadJSON(&msg))
 	assert.NoError(t, client.ReadJSON(&msg))

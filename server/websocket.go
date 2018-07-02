@@ -34,6 +34,15 @@ func (ws *WebSocket) Send(msg interface{}) {
 	ws.outgoing <- msg
 }
 
+func (ws *WebSocket) IsAlive() bool {
+	select {
+	case <-ws.writeLoopDone:
+		return false
+	default:
+		return true
+	}
+}
+
 func (ws *WebSocket) Close() error {
 	close(ws.outgoing)
 	<-ws.readLoopDone

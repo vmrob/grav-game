@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"io"
 	"net/http"
@@ -56,15 +57,30 @@ func (s *Server) run() {
 	}
 }
 
+type GameStateMessage struct {
+	Universe struct {
+		Bounds game.Rect
+		Bodies map[string]*game.Body
+	}
+}
+
 func (s *Server) tick() {
+	var gameState GameStateMessage
+	gameState.Universe.Bounds = s.universe.Bounds()
+	gameState.Universe.Bodies = make(map[string]*game.Body)
+	for id, body := range s.universe.Bodies() {
+		gameState.Universe.Bodies[fmt.Sprintf("%v", id)] = body
+	}
+
 	s.webSocketsMutex.Lock()
 	defer s.webSocketsMutex.Unlock()
 
-	type GameState struct{}
-
 	for ws := range s.webSockets {
-		// TODO: actually send something
-		ws.Send(GameState{})
+		if !ws.IsAlive() {
+			delete(s.webSockets, ws)
+			continue
+		}
+		ws.Send(&gameState)
 	}
 }
 
@@ -98,6 +114,9 @@ func (s *Server) gameHandler(w http.ResponseWriter, r *http.Request) {
 
 	logger := s.logger.WithField("connection_id", uuid.NewV4())
 	logger.Info("accepted websocket connection")
+
+	s.webSocketsMutex.Lock()
+	defer s.webSocketsMutex.Unlock()
 	s.webSockets[NewWebSocket(logger, conn)] = struct{}{}
 }
 
@@ -117,7 +136,16 @@ var indexTemplate = template.Must(template.New("").Parse(`
 		<title>grav-game</title>
 	</head>
 	<body>
-		<p>Nothing to see here.</p>
+		<span id="message"></span>
+		<script>
+		var ws = new WebSocket('ws://127.0.0.1:8080/game');
+		ws.onmessage = function(e) {
+			document.getElementById('message').innerText = e.data;
+		};
+		ws.onerror = function(e) {
+			document.getElementById('message').innerText = 'unable to connect';
+		};
+		</script>
 	</body>
 </html>
 `))
