@@ -207,28 +207,40 @@ var indexTemplate = template.Must(template.New("").Parse(`
 				this.state = null;
 			}
 
-			draw(context) {
+			getBody(id) {
+				return id in this.state["Bodies"] ? this.state["Bodies"][id] : null;
+			}
+
+			draw(context, focus) {
 				var min = new Vector(0, 0);
 				var max = new Vector(context.canvas.width, context.canvas.height);
 
-				var padding = 100;
-				for (const [id, body] of Object.entries(this.state["Bodies"])) {
-					if (body["Static"]) {
-						continue;
-					}
-					var pos = new Vector(body["Position"]["X"], body["Position"]["Y"]);
-					var r = body["Radius"];
-					if (pos.x - r - padding < min.x) {
+				if (focus) {
+					var r = focus["Radius"];
+					min.x = focus["Position"]["X"] - r * 30;
+					max.x = focus["Position"]["X"] + r * 30;
+					min.y = focus["Position"]["Y"] - r * 30;
+					max.y = focus["Position"]["Y"] + r * 30;
+				} else {
+					var padding = 100;
+					for (const [id, body] of Object.entries(this.state["Bodies"])) {
+						if (body["Static"]) {
+							continue;
+						}
+						var pos = new Vector(body["Position"]["X"], body["Position"]["Y"]);
+						var r = body["Radius"];
+						if (pos.x - r - padding < min.x) {
 							min.x = pos.x - r - padding;
-					}
-					if (pos.y - r - padding < min.y) {
+						}
+						if (pos.y - r - padding < min.y) {
 							min.y = pos.y - r - padding;
-					}
-					if (pos.x + r + padding > max.x) {
+						}
+						if (pos.x + r + padding > max.x) {
 							max.x = pos.x + r + padding;
-					}
-					if (pos.y + r + padding > max.y) {
+						}
+						if (pos.y + r + padding > max.y) {
 							max.y = pos.y + r + padding;
+						}
 					}
 				}
 
@@ -307,9 +319,12 @@ var indexTemplate = template.Must(template.New("").Parse(`
 		var context = canvas.getContext("2d");
 		var universe = new Universe()
 
+		var playerBodyId = null;
+
 		function update(state) {
 			universe.state = state;
-			universe.draw(context);
+  			var playerBody = universe.getBody(playerBodyId);
+			universe.draw(context, playerBody || null);
 		}
 
 		var ws = new WebSocket('ws://127.0.0.1:8080/game');
@@ -318,6 +333,9 @@ var indexTemplate = template.Must(template.New("").Parse(`
 			const data = JSON.parse(e.data);
 			if (data["GameState"]) {
 				update(data["GameState"]["Universe"]);
+			}
+			if (data["AssignedBodyId"]) {
+				playerBodyId = data["AssignedBodyId"];
 			}
 		};
 		ws.onerror = function(e) {
