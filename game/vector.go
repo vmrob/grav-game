@@ -1,32 +1,40 @@
 package game
 
+import (
+	"math"
+)
+
 type Vector struct {
 	X float64
 	Y float64
 }
 
-func (v Vector) Add(v2 Vector) Vector {
-	return Vector{
-		X: v.X + v2.X,
-		Y: v.Y + v2.Y,
-	}
+func (v Vector) Add(other Vector) Vector {
+	v.X += other.X
+	v.Y += other.Y
+	return v
 }
 
-func (v Vector) Sub(v2 Vector) Vector {
-	return Vector{
-		X: v.X - v2.X,
-		Y: v.Y - v2.Y,
-	}
+func (v Vector) Sub(other Vector) Vector {
+	v.X -= other.X
+	v.Y -= other.Y
+	return v
 }
 
 func (v Vector) Scale(s float64) Vector {
-	return Vector{
-		X: v.X * s,
-		Y: v.Y * s,
-	}
+	v.X *= s
+	v.Y *= s
+	return v
 }
 
-func (v Vector) DistanceSquared(v2 Vector) float64 {
-	d := v.Sub(v2)
-	return d.X*d.X + d.Y*d.Y
+func (v Vector) Magnitude() float64 {
+	return math.Sqrt(v.X*v.X + v.Y*v.Y)
+}
+
+func (v Vector) MagnitudeSquared() float64 {
+	return v.X*v.X + v.Y*v.Y
+}
+
+func (v Vector) WithMagnitude(m float64) Vector {
+	return v.Scale(m / v.Magnitude())
 }

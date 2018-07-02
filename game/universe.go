@@ -52,61 +52,48 @@ func (u *Universe) DecayBodies() {
 		}
 	}
 
-	idsToRemove := make([]BodyId, 0)
 	for id, b := range u.bodies {
 		if b.Mass == 0 {
-			idsToRemove = append(idsToRemove, id)
+			u.RemoveBody(id)
 		}
-	}
-	for id := range idsToRemove {
-		u.RemoveBody(id)
 	}
 }
 
 func (u *Universe) checkCollisions() {
-	//  checkCollisions() {
-	//    for (var i in this.bodies) {
-	//      for (var j in this.bodies) {
-	//        if (i <= j) {
-	//          // We only need to perform a single comparison for every (i, j) pair
-	//          // and only if i != j.
-	//          continue;
-	//        }
-	//        if (this.bodies[i].collidesWith(this.bodies[j])) {
-	//          if (this.bodies[i].mass > this.bodies[j].mass) {
-	//            this.bodies[i].mergeWith(this.bodies[j]);
-	//            this.removeBody(j);
-	//          } else {
-	//            this.bodies[j].mergeWith(this.bodies[i]);
-	//            this.removeBody(i);
-	//          }
-	//          // need to reevaluate everything
-	//          this.checkCollisions();
-	//          return;
-	//        }
-	//      }
-	//    }
-	//  }
+	for id, body := range u.bodies {
+		for otherId, other := range u.bodies {
+			if id <= otherId {
+				continue
+			}
+			if body.CollidesWith(other) {
+				if body.Mass > other.Mass {
+					body.MergeWith(other)
+					u.RemoveBody(otherId)
+				} else {
+					other.MergeWith(other)
+					u.RemoveBody(id)
+				}
+				// TODO: this could be a lot better
+				u.checkCollisions()
+				return
+			}
+		}
+	}
 }
 
 func (u *Universe) applyForces() {
-	//    for (var i in this.bodies) {
-	//      var netForces = [];
-	//      netForces.push()
-	//
-	//      for (var j in this.bodies) {
-	//        if (i == j) {
-	//          continue;
-	//        }
-	//        netForces.push(this.bodies[i].gravitationalForceTo(this.bodies[j]));
-	//      }
-	//
-	//      this.bodies[i].gravitationalForce = netForces.reduce(function(carry, force) {
-	//        return {
-	//          x: carry.x + force.x,
-	//          y: carry.y + force.y,
-	//        };
-	//      }, {x: 0, y: 0});
-	//    }
-	//  }
+	for id, body := range u.bodies {
+		netForces := make([]Vector, 0, len(u.bodies))
+		for otherId, other := range u.bodies {
+			if id == otherId {
+				continue
+			}
+			netForces = append(netForces, body.GravitationalForceTo(other))
+		}
+		body.GravitationalForce = Vector{}
+		for _, v := range netForces {
+			body.GravitationalForce.X += v.X
+			body.GravitationalForce.Y += v.Y
+		}
+	}
 }
