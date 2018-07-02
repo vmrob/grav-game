@@ -83,10 +83,8 @@ func (ws *WebSocket) writeLoop() {
 		ws.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 
 		if err := ws.conn.WriteJSON(msg); err != nil {
-			if !websocket.IsCloseError(err) || websocket.IsUnexpectedCloseError(err, websocket.CloseAbnormalClosure, websocket.CloseGoingAway) {
+			if !websocket.IsCloseError(err, websocket.CloseAbnormalClosure, websocket.CloseGoingAway) && err != websocket.ErrCloseSent {
 				ws.logger.Error(errors.Wrap(err, "websocket write error"))
-			} else {
-				ws.logger.Info(errors.Wrap(err, "client disconnecting"))
 			}
 			break
 		}
@@ -102,7 +100,7 @@ func (ws *WebSocket) readLoop() {
 		var msg json.RawMessage
 		err := ws.conn.ReadJSON(&msg)
 		if err != nil {
-			if !websocket.IsCloseError(err) || websocket.IsUnexpectedCloseError(err, websocket.CloseAbnormalClosure, websocket.CloseGoingAway) {
+			if !websocket.IsCloseError(err, websocket.CloseAbnormalClosure, websocket.CloseGoingAway) {
 				ws.logger.Error(errors.Wrap(err, "websocket read error"))
 			}
 			return
