@@ -48,7 +48,7 @@ func TestInBoundsDecay(t *testing.T) {
 	}
 
 	u.AddBody(&b)
-	u.DecayBodies()
+	u.decayBodies()
 
 	assert.True(t, b.Mass < startingMass)
 }
@@ -63,7 +63,7 @@ func TestOutOfBoundsDecay(t *testing.T) {
 	}
 
 	u.AddBody(&b)
-	u.DecayBodies()
+	u.decayBodies()
 
 	assert.True(t, b.Mass < startingMass)
 }

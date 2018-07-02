@@ -43,7 +43,7 @@ func (u *Universe) RemoveBody(id BodyId) {
 }
 
 func (u *Universe) Step(d time.Duration) {
-	u.DecayBodies()
+	u.decayBodies()
 	u.checkCollisions()
 	u.applyForces()
 	for _, b := range u.bodies {
@@ -51,7 +51,7 @@ func (u *Universe) Step(d time.Duration) {
 	}
 }
 
-func (u *Universe) DecayBodies() {
+func (u *Universe) decayBodies() {
 	for _, b := range u.bodies {
 		if !u.bounds.Contains(b.Position) {
 			b.ForceDecay(outOfBoundsDecayPerStep)
