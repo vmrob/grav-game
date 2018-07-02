@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"html/template"
 	"io"
 	"math/rand"
@@ -33,9 +32,9 @@ func DefaultUniverse() *game.Universe {
 	universe := game.NewUniverse(game.Rect{X: -10000, Y: -10000, W: 20000, H: 20000})
 	for i := 0; i < 500; i++ {
 		universe.AddBody(&game.Body{
-			Position: game.Point{rand.Float64()*20000 - 10000, rand.Float64()*20000 - 10000},
+			Position: game.Point{X: rand.Float64()*20000 - 10000, Y: rand.Float64()*20000 - 10000},
 			Mass:     rand.Float64() * 1000000,
-			Velocity: game.Vector{rand.Float64()*1000 - 500, rand.Float64()*1000 - 500},
+			Velocity: game.Vector{X: rand.Float64()*1000 - 500, Y: rand.Float64()*1000 - 500},
 		})
 	}
 	return universe
@@ -76,20 +75,14 @@ func (s *Server) run() {
 	}
 }
 
-type GameStateMessage struct {
-	Universe struct {
-		Bounds game.Rect
-		Bodies map[string]*game.Body
-	}
-}
-
 func (s *Server) tick() {
 	s.universe.Step(tickDuration)
-	var gameState GameStateMessage
+
+	var gameState WebSocketGameState
 	gameState.Universe.Bounds = s.universe.Bounds()
 	gameState.Universe.Bodies = make(map[string]*game.Body)
 	for id, body := range s.universe.Bodies() {
-		gameState.Universe.Bodies[fmt.Sprintf("%v", id)] = body
+		gameState.Universe.Bodies[id.String()] = body
 	}
 
 	s.webSocketsMutex.Lock()
@@ -101,7 +94,9 @@ func (s *Server) tick() {
 			continue
 		}
 
-		ws.Send(&gameState)
+		ws.Send(&WebSocketMessage{
+			GameState: &gameState,
+		})
 	}
 }
 
@@ -136,9 +131,22 @@ func (s *Server) gameHandler(w http.ResponseWriter, r *http.Request) {
 	logger := s.logger.WithField("connection_id", uuid.NewV4())
 	logger.Info("accepted websocket connection")
 
+	ws := NewWebSocket(logger, conn, s.universe)
+
 	s.webSocketsMutex.Lock()
-	defer s.webSocketsMutex.Unlock()
-	s.webSockets[NewWebSocket(logger, conn)] = struct{}{}
+	s.webSockets[ws] = struct{}{}
+	s.webSocketsMutex.Unlock()
+
+	bounds := s.universe.Bounds()
+	body := &game.Body{
+		Position: game.Point{X: bounds.X + rand.Float64()*bounds.W, Y: bounds.Y + rand.Float64()*bounds.H},
+		Mass:     10000,
+	}
+	s.universe.AddEvent(func() {
+		ws.Send(&WebSocketMessage{
+			AssignedBodyId: s.universe.AddBody(body).String(),
+		})
+	})
 }
 
 func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
@@ -197,7 +205,6 @@ var indexTemplate = template.Must(template.New("").Parse(`
 		class Universe {
 			constructor() {
 				this.state = null;
-				this.player = null;
 			}
 
 			draw(context) {
@@ -300,36 +307,22 @@ var indexTemplate = template.Must(template.New("").Parse(`
 		var context = canvas.getContext("2d");
 		var universe = new Universe()
 
+		function update(state) {
+			universe.state = state;
+			universe.draw(context);
+		}
+
 		var ws = new WebSocket('ws://127.0.0.1:8080/game');
 		ws.onmessage = function(e) {
 			document.getElementById('message').innerText = e.data;
-			json = JSON.parse(e.data)
-			universe.state = json["Universe"]
-			//universe.player = json["Player"]["Id"]
-			universe.draw(context);
+			const data = JSON.parse(e.data);
+			if (data["GameState"]) {
+				update(data["GameState"]["Universe"]);
+			}
 		};
 		ws.onerror = function(e) {
 			document.getElementById('message').innerText = 'unable to connect';
 		};
-
-    $(document).keyup(function(e) {
-			if (universe.player == null) {
-				return;
-			}
-			switch (e.which) {
-				case 37: // left
-					break;
-				case 38: // up
-					break;
-				case 39: // right
-					break;
-				case 40: // down
-					break;
-				default:
-					return;
-			}
-			e.preventDefault();
-    });
 		</script>
 	</body>
 </html>

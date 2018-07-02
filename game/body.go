@@ -2,8 +2,15 @@ package game
 
 import (
 	"math"
+	"strconv"
 	"time"
 )
+
+type BodyId int
+
+func (id BodyId) String() string {
+	return strconv.FormatInt(int64(id), 10)
+}
 
 type Body struct {
 	Position           Point

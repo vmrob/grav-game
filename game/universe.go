@@ -4,8 +4,6 @@ import (
 	"time"
 )
 
-type BodyId = int
-
 type Universe struct {
 	bounds Rect
 	bodies map[BodyId]*Body

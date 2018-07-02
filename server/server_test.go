@@ -10,8 +10,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/vmrob/grav-game/game"
 )
 
 func newWebsocketConnection(server *Server) (*websocket.Conn, error) {
@@ -47,17 +45,18 @@ func newWebsocketConnection(server *Server) (*websocket.Conn, error) {
 }
 
 func TestServer(t *testing.T) {
-	universe := game.NewUniverse(game.Rect{X: 0, Y: 0, W: 100, H: 100})
-
-	s := NewServer(logrus.StandardLogger(), universe)
+	s := NewServer(logrus.StandardLogger())
 	defer s.Close()
 
 	client, err := newWebsocketConnection(s)
 	require.NoError(t, err)
 	defer client.Close()
 
-	var msg GameStateMessage
-	assert.NoError(t, client.ReadJSON(&msg))
-	assert.NoError(t, client.ReadJSON(&msg))
-	assert.NoError(t, client.ReadJSON(&msg))
+	var msg WebSocketMessage
+	assignedBodyId := ""
+	for i := 0; assignedBodyId == "" && i < 30; i++ {
+		assert.NoError(t, client.ReadJSON(&msg))
+		assignedBodyId = msg.AssignedBodyId
+	}
+	assert.NotEmpty(t, assignedBodyId)
 }

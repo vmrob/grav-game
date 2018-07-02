@@ -7,31 +7,50 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/vmrob/grav-game/game"
 )
 
 type WebSocket struct {
 	conn          *websocket.Conn
-	outgoing      chan interface{}
+	outgoing      chan *WebSocketMessage
 	readLoopDone  chan struct{}
 	writeLoopDone chan struct{}
 	logger        logrus.FieldLogger
+	universe      *game.Universe
 }
 
-func NewWebSocket(logger logrus.FieldLogger, conn *websocket.Conn) *WebSocket {
+type WebSocketGameState struct {
+	Universe struct {
+		Bounds game.Rect
+		Bodies map[string]*game.Body
+	}
+}
+
+type WebSocketMessage struct {
+	GameState      *WebSocketGameState `json:",omitempty"`
+	AssignedBodyId string              `json:",omitempty"`
+}
+
+func NewWebSocket(logger logrus.FieldLogger, conn *websocket.Conn, universe *game.Universe) *WebSocket {
 	ret := &WebSocket{
 		conn:          conn,
-		outgoing:      make(chan interface{}, 1),
+		outgoing:      make(chan *WebSocketMessage, 10),
 		readLoopDone:  make(chan struct{}),
 		writeLoopDone: make(chan struct{}),
 		logger:        logger,
+		universe:      universe,
 	}
 	go ret.writeLoop()
 	go ret.readLoop()
 	return ret
 }
 
-func (ws *WebSocket) Send(msg interface{}) {
-	ws.outgoing <- msg
+func (ws *WebSocket) Send(msg *WebSocketMessage) {
+	select {
+	case ws.outgoing <- msg:
+	default:
+		ws.logger.Warn("dropping outgoing websocket message")
+	}
 }
 
 func (ws *WebSocket) IsAlive() bool {
