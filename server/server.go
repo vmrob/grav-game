@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"math/rand"
 	"net/http"
 	"sync"
 	"time"
@@ -28,10 +29,22 @@ type Server struct {
 	stopped         chan struct{}
 }
 
-func NewServer(logger logrus.FieldLogger, universe *game.Universe) *Server {
+func DefaultUniverse() *game.Universe {
+	universe := game.NewUniverse(game.Rect{X: -10000, Y: -10000, W: 20000, H: 20000})
+	for i := 0; i < 500; i++ {
+		universe.AddBody(&game.Body{
+			Position: game.Point{rand.Float64()*20000 - 10000, rand.Float64()*20000 - 10000},
+			Mass:     rand.Float64() * 1000000,
+			Velocity: game.Vector{rand.Float64()*1000 - 500, rand.Float64()*1000 - 500},
+		})
+	}
+	return universe
+}
+
+func NewServer(logger logrus.FieldLogger) *Server {
 	ret := &Server{
 		logger:     logger,
-		universe:   universe,
+		universe:   DefaultUniverse(),
 		router:     mux.NewRouter(),
 		webSockets: make(map[*WebSocket]struct{}),
 		stop:       make(chan struct{}),
@@ -55,6 +68,10 @@ func (s *Server) run() {
 			return
 		case <-ticker.C:
 			s.tick()
+			// TODO: win condition?
+			if len(s.universe.Bodies()) < 2 {
+				s.universe = DefaultUniverse()
+			}
 		}
 	}
 }

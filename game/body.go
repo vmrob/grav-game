@@ -12,6 +12,7 @@ type Body struct {
 	Static             bool
 	Velocity           Vector
 	GravitationalForce Vector
+	AdditionalForce    Vector
 	NetForce           Vector
 }
 
@@ -77,25 +78,7 @@ func (b *Body) updateRadius() {
 }
 
 func (b *Body) updateNetForce(d time.Duration) {
-	b.NetForce = b.GravitationalForce
-
-	//  var cooldownActive = this.cooldownActivationTime > new Date().getTime() - 5000;
-	//  var gravityInfluence = cooldownActive ? 0.1 : 1.0;
-	//  var f = new Vector(this.gravitationalForce.x * gravityInfluence, this.gravitationalForce.y * gravityInfluence);
-	//  var thrusterForce = (cooldownActive ? 2.0 : 1.0) * THRUSTER_BASE_FORCE * (10000 + this.mass) / (PLAYER_START_MASS * 4);
-	//  if (this.leftThrusterEnabled) {
-	//      f.x += thrusterForce;
-	//  }
-	//  if (this.rightThrusterEnabled) {
-	//      f.x -= thrusterForce;
-	//  }
-	//  if (this.topThrusterEnabled) {
-	//      f.y += thrusterForce;
-	//  }
-	//  if (this.bottomThrusterEnabled) {
-	//      f.y -= thrusterForce;
-	//  }
-	//  return f;
+	b.NetForce = b.GravitationalForce.Add(b.AdditionalForce)
 }
 
 func (b *Body) updateVelocity(d time.Duration) {

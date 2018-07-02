@@ -10,12 +10,14 @@ type Universe struct {
 	bounds Rect
 	bodies map[BodyId]*Body
 	nextId BodyId
+	events chan func()
 }
 
 func NewUniverse(bounds Rect) *Universe {
 	return &Universe{
 		bounds: bounds,
 		bodies: make(map[BodyId]*Body),
+		events: make(chan func(), 1000), // TODO: this isn't too scalable
 	}
 }
 
@@ -42,7 +44,19 @@ func (u *Universe) RemoveBody(id BodyId) {
 	delete(u.bodies, id)
 }
 
+func (u *Universe) consumeAvailableEvents() {
+	for {
+		select {
+		case f := <-u.events:
+			f()
+		default:
+			return
+		}
+	}
+}
+
 func (u *Universe) Step(d time.Duration) {
+	u.consumeAvailableEvents()
 	u.decayBodies()
 	u.checkCollisions()
 	u.applyForces()
@@ -104,4 +118,8 @@ func (u *Universe) applyForces() {
 			body.GravitationalForce.Y += v.Y
 		}
 	}
+}
+
+func (u *Universe) AddEvent(f func()) {
+	u.events <- f
 }
