@@ -15,17 +15,15 @@ import (
 func main() {
 	logger := logrus.StandardLogger()
 
-	universe := game.NewUniverse(game.Rect{X: -100, Y: -100, W: 200, H: 200})
+	universe := game.NewUniverse(game.Rect{X: -1000, Y: -1000, W: 2000, H: 2000})
 	universe.AddBody(&game.Body{
 		Position: game.Point{0, 100},
-		Mass:     100,
-		Radius:   10,
+		Mass:     200,
 		Velocity: game.Vector{5, 0},
 	})
 	universe.AddBody(&game.Body{
 		Position: game.Point{0, -100},
-		Mass:     100,
-		Radius:   10,
+		Mass:     200,
 		Velocity: game.Vector{-5, 0},
 	})
 
