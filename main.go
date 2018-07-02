@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/vmrob/grav-game/game"
+	"github.com/vmrob/grav-game/server"
 )
 
 func main() {
@@ -16,12 +17,12 @@ func main() {
 
 	universe := game.NewUniverse(game.Rect{X: 0, Y: 0, W: 100, H: 100})
 
-	server := NewServer(logger, universe)
-	defer server.Close()
+	s := server.NewServer(logger, universe)
+	defer s.Close()
 
 	httpServer := &http.Server{
 		Addr:    ":8080",
-		Handler: server,
+		Handler: s,
 	}
 
 	done := make(chan struct{})
