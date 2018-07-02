@@ -16,6 +16,18 @@ func main() {
 	logger := logrus.StandardLogger()
 
 	universe := game.NewUniverse(game.Rect{X: 0, Y: 0, W: 100, H: 100})
+	universe.AddBody(&game.Body{
+		Position: game.Point{0, 100},
+		Mass:     100,
+		Radius:   10,
+		Velocity: game.Vector{10, 0},
+	})
+	universe.AddBody(&game.Body{
+		Position: game.Point{0, -100},
+		Mass:     100,
+		Radius:   10,
+		Velocity: game.Vector{-10, 0},
+	})
 
 	s := server.NewServer(logger, universe)
 	defer s.Close()
