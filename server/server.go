@@ -50,6 +50,7 @@ func NewServer(logger logrus.FieldLogger) *Server {
 	}
 	ret.router.HandleFunc("/", ret.indexHandler)
 	ret.router.HandleFunc("/game", ret.gameHandler)
+	ret.router.NotFoundHandler = http.FileServer(http.Dir("dist"))
 	go ret.run()
 	return ret
 }
