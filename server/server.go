@@ -16,6 +16,8 @@ import (
 	"github.com/vmrob/grav-game/game"
 )
 
+const tickDuration = time.Second / 30
+
 type Server struct {
 	logger          logrus.FieldLogger
 	universe        *game.Universe
@@ -44,7 +46,7 @@ func NewServer(logger logrus.FieldLogger, universe *game.Universe) *Server {
 func (s *Server) run() {
 	defer close(s.stopped)
 
-	ticker := time.NewTicker(time.Second / 30)
+	ticker := time.NewTicker(tickDuration)
 	defer ticker.Stop()
 
 	for {
@@ -65,6 +67,7 @@ type GameStateMessage struct {
 }
 
 func (s *Server) tick() {
+	s.universe.Step(tickDuration)
 	var gameState GameStateMessage
 	gameState.Universe.Bounds = s.universe.Bounds()
 	gameState.Universe.Bodies = make(map[string]*game.Body)

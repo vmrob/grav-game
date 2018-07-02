@@ -12,10 +12,14 @@ type Body struct {
 	Static             bool
 	Velocity           Vector
 	GravitationalForce Vector
+	NetForce           Vector
 }
 
 func (b *Body) Step(d time.Duration) {
-
+	b.updateRadius()
+	b.updateNetForce(d)
+	b.updateVelocity(d)
+	b.updatePosition(d)
 }
 
 func (b *Body) Decay(pct float64) {
@@ -66,4 +70,46 @@ func (b *Body) GravitationalForceTo(other *Body) Vector {
 	}
 	force := gravitationalConstant * b.Mass * other.Mass / math.Pow(b.DistanceTo(other.Position), 2)
 	return b.Position.VectorTo(other.Position).WithMagnitude(force)
+}
+
+func (b *Body) updateRadius() {
+	b.Radius = math.Cbrt((b.Mass * 3) / (4 * math.Pi))
+}
+
+func (b *Body) updateNetForce(d time.Duration) {
+	b.NetForce = b.GravitationalForce
+
+	//  var cooldownActive = this.cooldownActivationTime > new Date().getTime() - 5000;
+	//  var gravityInfluence = cooldownActive ? 0.1 : 1.0;
+	//  var f = new Vector(this.gravitationalForce.x * gravityInfluence, this.gravitationalForce.y * gravityInfluence);
+	//  var thrusterForce = (cooldownActive ? 2.0 : 1.0) * THRUSTER_BASE_FORCE * (10000 + this.mass) / (PLAYER_START_MASS * 4);
+	//  if (this.leftThrusterEnabled) {
+	//      f.x += thrusterForce;
+	//  }
+	//  if (this.rightThrusterEnabled) {
+	//      f.x -= thrusterForce;
+	//  }
+	//  if (this.topThrusterEnabled) {
+	//      f.y += thrusterForce;
+	//  }
+	//  if (this.bottomThrusterEnabled) {
+	//      f.y -= thrusterForce;
+	//  }
+	//  return f;
+}
+
+func (b *Body) updateVelocity(d time.Duration) {
+	if b.Static {
+		return
+	}
+	b.Velocity.X += b.NetForce.X / b.Mass * d.Seconds()
+	b.Velocity.Y += b.NetForce.Y / b.Mass * d.Seconds()
+}
+
+func (b *Body) updatePosition(d time.Duration) {
+	if b.Static {
+		return
+	}
+	b.Position.X += b.Velocity.X * d.Seconds()
+	b.Position.Y += b.Velocity.Y * d.Seconds()
 }
