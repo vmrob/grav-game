@@ -12,21 +12,33 @@ func randomPointInRect(r Rect) Point {
 	}
 }
 
+func orbitVector(p Point, b *Body) Vector {
+	v := math.Sqrt(gravitationalConstant * b.Mass / distance(p, b.Position))
+	return Vector{p.Y, -p.X}.WithMagnitude(v).Add(b.Velocity)
+}
+
 func ThreatSpawnEvent(u *Universe) func() {
 	return func() {
-		maxMass := 0.0
+		var largestBody *Body
 		for _, b := range u.Bodies() {
-			maxMass = math.Max(maxMass, b.Mass)
+			if largestBody == nil || b.Mass > largestBody.Mass {
+				largestBody = b
+			}
 		}
-		maxMass = math.Min(maxMass*2, PlayerStartMass*10)
+
+		p := randomPointInRect(u.Bounds())
+		m := float64(PlayerStartMass)
+		v := Vector{0, 0}
+
+		if largestBody != nil {
+			m = rand.Float64() * math.Min(largestBody.Mass*2, PlayerStartMass*10)
+			v = orbitVector(p, largestBody)
+		}
 
 		b := Body{
-			Position: randomPointInRect(u.Bounds()),
-			Mass:     rand.Float64() * maxMass,
-			Velocity: Vector{
-				X: float64(rand.Int31n(200) - 100),
-				Y: float64(rand.Int31n(200) - 100),
-			},
+			Position: p,
+			Mass:     m,
+			Velocity: v,
 		}
 		u.AddBody(&b)
 	}
@@ -34,13 +46,25 @@ func ThreatSpawnEvent(u *Universe) func() {
 
 func FoodSpawnEvent(u *Universe) func() {
 	return func() {
+		var largestBody *Body
+		for _, b := range u.Bodies() {
+			if largestBody == nil || b.Mass > largestBody.Mass {
+				largestBody = b
+			}
+		}
+
+		p := randomPointInRect(u.Bounds())
+		m := rand.Float64()*PlayerStartMass*0.4 + PlayerStartMass*0.1
+		v := Vector{0, 0}
+
+		if largestBody != nil {
+			v = orbitVector(p, largestBody)
+		}
+
 		b := Body{
-			Position: randomPointInRect(u.Bounds()),
-			Mass:     rand.Float64()*PlayerStartMass*0.4 + PlayerStartMass*0.1,
-			Velocity: Vector{
-				X: float64(rand.Int31n(1000) - 500),
-				Y: float64(rand.Int31n(1000) - 500),
-			},
+			Position: p,
+			Mass:     m,
+			Velocity: v,
 		}
 		u.AddBody(&b)
 	}

@@ -50,11 +50,7 @@ func (b *Body) ForceDecay(pct float64) {
 }
 
 func (b *Body) CollidesWith(other *Body) bool {
-	return b.DistanceTo(other.Position) < b.Radius+other.Radius
-}
-
-func (b *Body) DistanceTo(p Point) float64 {
-	return math.Sqrt(math.Pow(b.Position.X-p.X, 2) + math.Pow(b.Position.Y-p.Y, 2))
+	return distance(b.Position, other.Position) < b.Radius+other.Radius
 }
 
 func (b *Body) MergeWith(other *Body) {
@@ -76,7 +72,7 @@ func (b *Body) GravitationalForceTo(other *Body) Vector {
 	if b.Static || other.Static {
 		return Vector{}
 	}
-	force := gravitationalConstant * b.Mass * other.Mass / math.Pow(b.DistanceTo(other.Position), 2)
+	force := gravitationalConstant * b.Mass * other.Mass / distanceSquared(b.Position, other.Position)
 	return b.Position.VectorTo(other.Position).WithMagnitude(force)
 }
 
