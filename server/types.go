@@ -1,20 +1,44 @@
 package server
 
-import "github.com/vmrob/grav-game/game"
+import (
+	"math"
+
+	"github.com/vmrob/grav-game/game"
+)
+
+func WebSocketFloat(f float64) float32 {
+	return float32(math.Round(f*100) / 100)
+}
+
+type WebSocketPoint struct {
+	X float32
+	Y float32
+}
+
+type WebSocketVector struct {
+	X float32
+	Y float32
+}
 
 type WebSocketBody struct {
-	Position game.Point
-	Mass     float64
-	Radius   float64
-	NetForce game.Vector
+	Position WebSocketPoint
+	Mass     float32
+	Radius   float32
+	NetForce WebSocketVector
 }
 
 func NewWebSocketBody(body *game.Body) *WebSocketBody {
 	return &WebSocketBody{
-		Position: body.Position,
-		Mass:     body.Mass,
-		Radius:   body.Radius,
-		NetForce: body.NetForce,
+		Position: WebSocketPoint{
+			X: WebSocketFloat(body.Position.X),
+			Y: WebSocketFloat(body.Position.Y),
+		},
+		Mass:   WebSocketFloat(body.Mass),
+		Radius: WebSocketFloat(body.Radius),
+		NetForce: WebSocketVector{
+			X: WebSocketFloat(body.NetForce.X),
+			Y: WebSocketFloat(body.NetForce.Y),
+		},
 	}
 }
 
