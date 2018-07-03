@@ -7,11 +7,11 @@
 	</head>
 	<body>
 		<center>
-			<canvas id="gameCanvas" width="1200" height="700" style="border:1px solid #000000;"></canvas>
+			<canvas id="gameCanvas" width="1400" height="900" style="border:1px solid #000000;"></canvas>
 		</center>
 		<span id="message"></span>
 		<script>
-		const GRID_LINE_INTERVAL = 1000;
+		const GRID_LINE_INTERVAL = 250;
 
 		class Rect {
 			constructor(x, y, width, height) {
@@ -95,7 +95,7 @@
 				for (var x = bounds.x; x < bounds.x + bounds.width; x += GRID_LINE_INTERVAL) {
 					context.beginPath();
 					context.strokeStyle = '#000000';
-					context.lineWidth = 10;
+					context.lineWidth = 5;
 					context.moveTo(x, bounds.y);
 					context.lineTo(x, bounds.y + bounds.height);
 					context.stroke();
@@ -103,7 +103,7 @@
 				for (var y = bounds.y; y < bounds.y + bounds.height; y += GRID_LINE_INTERVAL) {
 					context.beginPath();
 					context.strokeStyle = '#000000';
-					context.lineWidth = 10;
+					context.lineWidth = 5;
 					context.moveTo(bounds.x, y);
 					context.lineTo(bounds.x + bounds.width, y);
 					context.stroke();
@@ -200,7 +200,7 @@
 
 		var ws = new WebSocket('ws://' + location.host  + '/game');
 		ws.onmessage = function(e) {
-			document.getElementById('message').innerText = e.data;
+			//document.getElementById('message').innerText = e.data;
 			const data = JSON.parse(e.data);
 			if (data["GameState"]) {
 				update(data["GameState"]["Universe"]);

@@ -2,7 +2,6 @@ package server
 
 import (
 	"io"
-	"math/rand"
 	"net/http"
 	"sync"
 	"time"
@@ -16,6 +15,8 @@ import (
 )
 
 const tickDuration = time.Second / 30
+const threatSpawnInterval = time.Second * 5
+const foodSpawnInterval = time.Millisecond * 100
 
 type Server struct {
 	logger          logrus.FieldLogger
@@ -28,21 +29,7 @@ type Server struct {
 }
 
 func DefaultUniverse() *game.Universe {
-	universe := game.NewUniverse(game.Rect{X: -1000, Y: -1000, W: 2000, H: 2000})
-	for i := 0; i < 50; i++ {
-		universe.AddBody(&game.Body{
-			Position: game.Point{
-				X: rand.Float64()*2000 - 1000,
-				Y: rand.Float64()*2000 - 1000,
-			},
-			Mass: rand.Float64() * 10000,
-			Velocity: game.Vector{
-				X: rand.Float64()*100 - 50,
-				Y: rand.Float64()*100 - 50,
-			},
-		})
-	}
-	return universe
+	return game.NewUniverse(game.Rect{X: -5000, Y: -5000, W: 10000, H: 10000})
 }
 
 func NewServer(logger logrus.FieldLogger) *Server {
@@ -64,19 +51,23 @@ func NewServer(logger logrus.FieldLogger) *Server {
 func (s *Server) run() {
 	defer close(s.stopped)
 
-	ticker := time.NewTicker(tickDuration)
-	defer ticker.Stop()
+	tickTicker := time.NewTicker(tickDuration)
+	threatTicker := time.NewTicker(threatSpawnInterval)
+	foodTicker := time.NewTicker(foodSpawnInterval)
+	defer foodTicker.Stop()
+	defer threatTicker.Stop()
+	defer tickTicker.Stop()
 
 	for {
 		select {
 		case <-s.stop:
 			return
-		case <-ticker.C:
+		case <-threatTicker.C:
+			s.universe.AddEvent(game.ThreatSpawnEvent(s.universe))
+		case <-foodTicker.C:
+			s.universe.AddEvent(game.FoodSpawnEvent(s.universe))
+		case <-tickTicker.C:
 			s.tick()
-			// TODO: win condition?
-			if len(s.universe.Bodies()) < 2 {
-				s.universe = DefaultUniverse()
-			}
 		}
 	}
 }
