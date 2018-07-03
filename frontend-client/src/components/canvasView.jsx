@@ -17,6 +17,7 @@ class CanvasView extends React.Component {
             host: '127.0.0.1:8080',
             useLocalhost: true,
         };
+        this.state.canvas = React.createRef();
         this.initPlayer();
         this.initWebSocket();
         this.bigBang();
@@ -25,7 +26,7 @@ class CanvasView extends React.Component {
 
     initPlayer() {
         this.state.playerState = new PlayerState();
-        if (this.state.isMounted) {
+        if (this.isMounted) {
             this.setState();
         }
     }
@@ -49,14 +50,14 @@ class CanvasView extends React.Component {
             document.getElementById('message')
                 .innerText = `unable to connect: ${JSON.stringify(e)}`;
         };
-        if (this.state.isMounted) {
+        if (this.isMounted) {
             this.setState();
         }
     }
 
     bigBang() {
         this.state.universe = new Universe();
-        if (this.state.isMounted) {
+        if (this.isMounted) {
             this.setState();
         }
     }
@@ -96,7 +97,7 @@ class CanvasView extends React.Component {
     }
 
     update(state) {
-        if (!this.state.isMounted || !this.state.canvas) {
+        if (!this.isMounted || !this.context) {
             return;
         }
         this.state.universe.state = state;
@@ -106,13 +107,12 @@ class CanvasView extends React.Component {
 
     // life-cycle hooks
     componentDidMount() {
-        this.state.isMounted = true;
-        this.state.canvas = document.getElementById('game-canvas');
-        this.state.context = document.getElementById('game-canvas').getContext('2d');
+        this.isMounted = true;
+        this.state.context = this.state.canvas.current.getContext('2d');
     }
 
     componentWillUnmount() {
-        this.state.isMounted = false;
+        this.isMounted = false;
     }
 
     render() {
@@ -120,6 +120,7 @@ class CanvasView extends React.Component {
             <div>
                 <div id='message' />
                 <canvas id='game-canvas'
+                    ref={this.state.canvas}
                     style={{ width: this.state.canvasWidth, height: this.state.canvasHeight, }}
                     height={this.state.canvasHeight}
                     width={this.state.canvasWidth}
