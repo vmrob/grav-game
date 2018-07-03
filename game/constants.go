@@ -1,9 +1,10 @@
 package game
 
+const PlayerStartMass = 10000
+
 const decayPerStep = 0.0001
 const outOfBoundsDecayPerStep = 0.01
-const playerStartMass = 10000
-const minDecayMass = playerStartMass
+const minDecayMass = PlayerStartMass
 const minDecayMassForced = 500
 const gravitationalConstant = 100
 const thrustBaseMagnitude = 5000000
