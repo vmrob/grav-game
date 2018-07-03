@@ -5,8 +5,8 @@ class CanvasView extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            canvasHeight: 900,
-            canvasWidth: 1400,
+            canvasHeight: window.innerHeight,
+            canvasWidth: window.innerWidth,
             PLAYER_1_COLOR: '#cfcf80',
             PLAYER_2_COLOR: '#80cfcf',
             canvas: null,
@@ -22,6 +22,8 @@ class CanvasView extends React.Component {
         this.initWebSocket();
         this.bigBang();
         this.listenForPlayerInput();
+
+        this.handleResizeEvent = this.handleResizeEvent.bind(this);
     }
 
     initPlayer() {
@@ -105,14 +107,23 @@ class CanvasView extends React.Component {
         this.state.universe.draw(this.state.context, playerBody || null);
     }
 
+    handleResizeEvent() {
+        this.setState({
+            canvasWidth: window.innerWidth,
+            canvasHeight: window.innerHeight,
+        });
+    }
+
     // life-cycle hooks
     componentDidMount() {
         this.state.isMounted = true;
         this.state.context = this.state.canvas.current.getContext('2d');
+        window.addEventListener('resize', this.handleResizeEvent);
     }
 
     componentWillUnmount() {
         this.state.isMounted = false;
+        window.removeEventListener('resize', this.handleResizeEvent);
     }
 
     render() {

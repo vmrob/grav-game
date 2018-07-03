@@ -2,6 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import CanvasView from './components/CanvasView';
 
+import './stylesheets/styles.css';
+
 class GameView extends React.Component {
     constructor(props) {
         super(props);

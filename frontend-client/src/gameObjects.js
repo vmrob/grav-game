@@ -74,9 +74,21 @@ class Universe {
     }
 
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-    var scaleX = context.canvas.width / (max.x - min.x);
-    var scaleY = context.canvas.height / (max.y - min.y);
-    var scale = scaleX > scaleY ? scaleY : scaleX;
+    const scaleX = context.canvas.width / (max.x - min.x);
+    const scaleY = context.canvas.height / (max.y - min.y);
+    const scale = scaleX > scaleY ? scaleY : scaleX;
+    const aspectRatio = context.canvas.width / context.canvas.height;
+    if (scaleX > scaleY) {
+        const desiredWidth = aspectRatio * (max.y - min.y);
+        const extraPadding = (desiredWidth - (max.x - min.x)) / 2;
+        min.x -= extraPadding;
+        max.x += extraPadding;
+    } else {
+        const desiredHeight = (max.x - min.x) / aspectRatio;
+        const extraPadding = (desiredHeight - (max.y - min.y)) / 2;
+        min.y -= extraPadding;
+        max.y += extraPadding;
+    }
     context.scale(scale, scale);
     context.translate(-min.x, -min.y);
 
