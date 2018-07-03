@@ -1,0 +1,9 @@
+node_modules
+eslint.xml
+npm-debug.log
+*~
+.*
+!.gitignore
+!.eslintignore
+!.eslintrc.js
+dist
