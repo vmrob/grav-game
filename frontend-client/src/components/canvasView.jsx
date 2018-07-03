@@ -1,5 +1,6 @@
 import React from 'react';
-import { Universe, PlayerState } from '../gameObjects';
+
+import {Universe, PlayerState} from '../gameObjects';
 
 class CanvasView extends React.Component {
     constructor(props) {
@@ -7,11 +8,10 @@ class CanvasView extends React.Component {
         this.state = {
             canvasHeight: window.innerHeight,
             canvasWidth: window.innerWidth,
-            PLAYER_1_COLOR: '#cfcf80',
-            PLAYER_2_COLOR: '#80cfcf',
             canvas: null,
             context: null,
             ws: null,
+            playerBody: null,
             playerBodyId: null,
             isMounted: false,
             host: '127.0.0.1:8080',
@@ -49,8 +49,7 @@ class CanvasView extends React.Component {
             }
         };
         this.state.ws.onerror = function (e) {
-            document.getElementById('message')
-                .innerText = `unable to connect: ${JSON.stringify(e)}`;
+            alert(`unable to connect: ${JSON.stringify(e)}`);
         };
         if (this.state.isMounted) {
             this.setState();
@@ -105,6 +104,10 @@ class CanvasView extends React.Component {
         this.state.universe.state = state;
         const playerBody = this.state.universe.getBody(this.state.playerBodyId);
         this.state.universe.draw(this.state.context, playerBody || null);
+        console.log(playerBody);
+        this.setState({
+            playerBody,
+        });
     }
 
     handleResizeEvent() {
@@ -127,9 +130,26 @@ class CanvasView extends React.Component {
     }
 
     render() {
+        const body = this.state.playerBody;
+
         return (
-            <div>
-                <div id='message' />
+            <div id="canvas-wrapper">
+                <div id="overlay">
+                    {body && (
+                        <div>
+                            <p>Mass: {body['Mass']}</p>
+                            {body['MinorName'] && (
+                                <p>Minor Name: {body['MinorName']}</p>
+                            )}
+                            {body['MajorName'] && (
+                                <p>Major Name: {body['MajorName']}</p>
+                            )}
+                        </div>
+                    )}
+                    {!body && (
+                        <p>Reload to play again.</p>
+                    )}
+                </div>
                 <canvas id='game-canvas'
                     ref={this.state.canvas}
                     style={{ width: this.state.canvasWidth, height: this.state.canvasHeight, }}
