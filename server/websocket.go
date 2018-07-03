@@ -20,22 +20,6 @@ type WebSocket struct {
 	body          *game.Body
 }
 
-type WebSocketGameState struct {
-	Universe struct {
-		Bounds game.Rect
-		Bodies map[string]*game.Body
-	}
-}
-
-type WebSocketOutput struct {
-	GameState      *WebSocketGameState `json:",omitempty"`
-	AssignedBodyId string              `json:",omitempty"`
-}
-
-type WebSocketInput struct {
-	Thrust *game.Vector `json:",omitempty"`
-}
-
 func NewWebSocket(logger logrus.FieldLogger, conn *websocket.Conn, universe *game.Universe) *WebSocket {
 	bounds := universe.Bounds()
 	ret := &WebSocket{

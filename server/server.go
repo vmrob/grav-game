@@ -77,9 +77,9 @@ func (s *Server) tick() {
 
 	var gameState WebSocketGameState
 	gameState.Universe.Bounds = s.universe.Bounds()
-	gameState.Universe.Bodies = make(map[string]*game.Body)
+	gameState.Universe.Bodies = make(map[string]*WebSocketBody)
 	for id, body := range s.universe.Bodies() {
-		gameState.Universe.Bodies[id.String()] = body
+		gameState.Universe.Bodies[id.String()] = NewWebSocketBody(body)
 	}
 
 	s.webSocketsMutex.Lock()
@@ -120,6 +120,7 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true
 	},
+	EnableCompression: true,
 }
 
 func (s *Server) gameHandler(w http.ResponseWriter, r *http.Request) {
@@ -128,6 +129,7 @@ func (s *Server) gameHandler(w http.ResponseWriter, r *http.Request) {
 		s.logger.Warn(err)
 		return
 	}
+	conn.EnableWriteCompression(true)
 
 	logger := s.logger.WithField("connection_id", uuid.NewV4())
 	logger.Info("accepted websocket connection")
