@@ -13,6 +13,8 @@ func (id BodyId) String() string {
 }
 
 type Body struct {
+	MinorName          string
+	MajorName          string
 	Position           Point
 	Mass               float64
 	Radius             float64

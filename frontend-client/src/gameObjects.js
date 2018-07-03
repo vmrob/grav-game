@@ -128,6 +128,8 @@ class Universe {
       var fMag = f.magnitude();
       var fNorm = new Vector(f.x / fMag, f.y / fMag);
 
+      const fontSize = r;
+
       context.beginPath();
       context.arc(pos.x, pos.y, r, 0, 2 * Math.PI);
       context.fillStyle = this.color;
@@ -135,6 +137,9 @@ class Universe {
       context.lineWidth = 5;
       context.strokeStyle = '#003300';
       context.stroke();
+      context.textAlign = 'center';
+      context.font = fontSize + 'px Arial';
+      context.fillText(body['MajorName'] || body['MinorName'] || '', pos.x, pos.y + r * 2.1);
 
       context.lineWidth = 2;
       context.strokeStyle = '#FF00FF';

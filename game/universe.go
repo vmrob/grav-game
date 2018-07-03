@@ -1,6 +1,8 @@
 package game
 
 import (
+	"math/rand"
+	"sort"
 	"time"
 )
 
@@ -58,8 +60,30 @@ func (u *Universe) Step(d time.Duration) {
 	u.decayBodies()
 	u.checkCollisions()
 	u.applyForces()
+
+	rankings := make([]*Body, 0, len(u.bodies))
 	for _, b := range u.bodies {
 		b.Step(d)
+		rankings = append(rankings, b)
+	}
+	sort.Slice(rankings, func(i, j int) bool {
+		return rankings[i].Mass > rankings[j].Mass
+	})
+
+	if len(rankings) >= 100 {
+		majorThreshold := rankings[len(rankings)/100].Mass * 3
+		for _, b := range rankings[:len(rankings)/100] {
+			if b.MajorName == "" && b.Mass >= majorThreshold {
+				b.MajorName = u.NewMajorName()
+			}
+		}
+	}
+
+	minor := len(rankings) / 100
+	for _, b := range rankings[:minor] {
+		if b.MinorName == "" {
+			b.MinorName = u.NewMinorName()
+		}
 	}
 }
 
@@ -120,4 +144,55 @@ func (u *Universe) applyForces() {
 
 func (u *Universe) AddEvent(f func()) {
 	u.events <- f
+}
+
+var phoneticAlphabet = []string{
+	"Alfa", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliett",
+	"Kilo", "Lima", "Mike", "November", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango",
+	"Uniform", "Victor", "Whiskey", "X-Ray", "Yankee", "Zulu",
+}
+
+var alphaNumeric = "QWERTYUIOPASDFGHJKLZXCVBNM1234567890"
+
+func (u *Universe) NewMinorName() string {
+	for {
+		name := phoneticAlphabet[rand.Intn(len(phoneticAlphabet))] + " "
+		for i := 0; i < 5; i++ {
+			name += string(rune(alphaNumeric[rand.Intn(len(alphaNumeric))]))
+		}
+		inUse := false
+		for _, body := range u.bodies {
+			if body.MinorName == name {
+				inUse = true
+				break
+			}
+		}
+		if !inUse {
+			return name
+		}
+	}
+}
+
+var majorNames = []string{
+	"Zeus", "Hera", "Poseidon", "Demeter", "Ares", "Athena", "Apollo", "Artemis", "Hephaestus",
+	"Aphrodite", "Hermes", "Dionysus", "Hades", "Hypnos", "Nike", "Janus", "Nemesis", "Iris",
+	"Hecate", "Tyche",
+}
+
+func (u *Universe) NewMajorName() string {
+	indices := rand.Perm(len(majorNames))
+	for _, i := range indices {
+		name := majorNames[i]
+		inUse := false
+		for _, body := range u.bodies {
+			if body.MajorName == name {
+				inUse = true
+				break
+			}
+		}
+		if !inUse {
+			return name
+		}
+	}
+	return ""
 }

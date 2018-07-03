@@ -21,14 +21,18 @@ type WebSocketVector struct {
 }
 
 type WebSocketBody struct {
-	Position WebSocketPoint
-	Mass     float32
-	Radius   float32
-	NetForce WebSocketVector
+	MinorName string `json:",omitempty"`
+	MajorName string `json:",omitempty"`
+	Position  WebSocketPoint
+	Mass      float32
+	Radius    float32
+	NetForce  WebSocketVector
 }
 
 func NewWebSocketBody(body *game.Body) *WebSocketBody {
 	return &WebSocketBody{
+		MinorName: body.MinorName,
+		MajorName: body.MajorName,
 		Position: WebSocketPoint{
 			X: WebSocketFloat(body.Position.X),
 			Y: WebSocketFloat(body.Position.Y),
