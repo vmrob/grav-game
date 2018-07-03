@@ -26,7 +26,7 @@ class CanvasView extends React.Component {
 
     initPlayer() {
         this.state.playerState = new PlayerState();
-        if (this.isMounted) {
+        if (this.state.isMounted) {
             this.setState();
         }
     }
@@ -50,14 +50,14 @@ class CanvasView extends React.Component {
             document.getElementById('message')
                 .innerText = `unable to connect: ${JSON.stringify(e)}`;
         };
-        if (this.isMounted) {
+        if (this.state.isMounted) {
             this.setState();
         }
     }
 
     bigBang() {
         this.state.universe = new Universe();
-        if (this.isMounted) {
+        if (this.state.isMounted) {
             this.setState();
         }
     }
@@ -97,7 +97,7 @@ class CanvasView extends React.Component {
     }
 
     update(state) {
-        if (!this.isMounted || !this.context) {
+        if (!this.state.isMounted || !this.context) {
             return;
         }
         this.state.universe.state = state;
@@ -107,12 +107,12 @@ class CanvasView extends React.Component {
 
     // life-cycle hooks
     componentDidMount() {
-        this.isMounted = true;
+        this.state.isMounted = true;
         this.state.context = this.state.canvas.current.getContext('2d');
     }
 
     componentWillUnmount() {
-        this.isMounted = false;
+        this.state.isMounted = false;
     }
 
     render() {
