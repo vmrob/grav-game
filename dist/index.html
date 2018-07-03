@@ -198,7 +198,7 @@
 			universe.draw(context, playerBody || null);
 		}
 
-		var ws = new WebSocket('ws://127.0.0.1:8080/game');
+		var ws = new WebSocket('ws://' + location.host  + '/game');
 		ws.onmessage = function(e) {
 			document.getElementById('message').innerText = e.data;
 			const data = JSON.parse(e.data);
