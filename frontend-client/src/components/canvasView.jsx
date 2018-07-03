@@ -5,11 +5,8 @@ class CanvasView extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            style: {
-                width: '1200',
-                height: '700',
-            },
-            GRID_LINE_INTERVAL: 1000,
+            canvasHeight: 700,
+            canvasWidth: 1200,
             PLAYER_1_COLOR: '#cfcf80',
             PLAYER_2_COLOR: '#80cfcf',
             canvas: null,
@@ -119,7 +116,10 @@ class CanvasView extends React.Component {
             <div>
                 <div id='message' />
                 <canvas id='game-canvas'
-                    style={{ width: 1200, height: 700, }}/>
+                    style={{ width: this.state.canvasWidth, height: this.state.canvasHeight, }}
+                    height={this.state.canvasHeight}
+                    width={this.state.canvasWidth}
+                />
             </div>
         );
     }
