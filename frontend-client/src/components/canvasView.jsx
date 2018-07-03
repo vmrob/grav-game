@@ -14,6 +14,8 @@ class CanvasView extends React.Component {
             ws: null,
             playerBodyId: null,
             isMounted: false,
+            host: '127.0.0.1:8080',
+            useLocalhost: true,
         };
         this.initPlayer();
         this.initWebSocket();
@@ -30,9 +32,9 @@ class CanvasView extends React.Component {
 
     initWebSocket() {
         const self = this;
-        this.state.ws = new WebSocket('ws://127.0.0.1:8080/game');
+        this.state.ws = new WebSocket(`ws://${this.state.useLocalhost ?
+            this.state.host : window.locaction.host}/game`);
         this.state.ws.onmessage = function (e) {
-            // document.getElementById('message').innerText = e.data;
             const data = JSON.parse(e.data);
             if (data.GameState) {
                 self.update(data.GameState.Universe);
@@ -40,6 +42,7 @@ class CanvasView extends React.Component {
             }
             if (data.AssignedBodyId) {
                 self.state.playerState.playerBodyId = data.AssignedBodyId;
+                self.state.playerBodyId = data.AssignedBodyId;
             }
         };
         this.state.ws.onerror = function (e) {
@@ -62,25 +65,26 @@ class CanvasView extends React.Component {
     listenForPlayerInput() {
         const self = this;
         function handleUserInput(e) {
-            if (self.state.playerBodyId === null) {
+            const val = e.type === 'keydown' ? true : false;
+            if (self.state.playerState.playerBodyId === null) {
                 return;
             }
             switch (e.which) {
             case 37:
                 // left
-                self.state.playerState.leftThrustEnabled = false;
+                self.state.playerState.leftThrustEnabled = val;
                 break;
             case 38:
                 // up
-                self.state.playerState.topThrustEnabled = false;
+                self.state.playerState.topThrustEnabled = val;
                 break;
             case 39:
                 // right
-                self.state.playerState.rightThrustEnabled = false;
+                self.state.playerState.rightThrustEnabled = val;
                 break;
             case 40:
                 // down
-                self.state.playerState.bottomThrustEnabled = false;
+                self.state.playerState.bottomThrustEnabled = val;
                 break;
             default:
                 return;
