@@ -29,7 +29,7 @@ class Vector {
   }
 }
 
-const GRID_LINE_INTERVAL = 1000;
+const GRID_LINE_INTERVAL = 250;
 
 class Universe {
   constructor() {
@@ -85,7 +85,7 @@ class Universe {
     for (var x = bounds.x; x < bounds.x + bounds.width; x += GRID_LINE_INTERVAL) {
       context.beginPath();
       context.strokeStyle = '#000000';
-      context.lineWidth = 10;
+      context.lineWidth = 5;
       context.moveTo(x, bounds.y);
       context.lineTo(x, bounds.y + bounds.height);
       context.stroke();
@@ -93,7 +93,7 @@ class Universe {
     for (var y = bounds.y; y < bounds.y + bounds.height; y += GRID_LINE_INTERVAL) {
       context.beginPath();
       context.strokeStyle = '#000000';
-      context.lineWidth = 10;
+      context.lineWidth = 5;
       context.moveTo(bounds.x, y);
       context.lineTo(bounds.x + bounds.width, y);
       context.stroke();
@@ -160,10 +160,10 @@ class PlayerState {
       },
     };
     if (this.topThrustEnabled) {
-      state.Thrust.y += 1.0;
+      state.Thrust.y -= 1.0;
     }
     if (this.bottomThrustEnabled) {
-      state.Thrust.y -= 1.0;
+      state.Thrust.y += 1.0;
     }
     if (this.leftThrustEnabled) {
       state.Thrust.x -= 1.0;

@@ -5,8 +5,8 @@ class CanvasView extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            canvasHeight: 700,
-            canvasWidth: 1200,
+            canvasHeight: 900,
+            canvasWidth: 1400,
             PLAYER_1_COLOR: '#cfcf80',
             PLAYER_2_COLOR: '#80cfcf',
             canvas: null,
