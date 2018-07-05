@@ -2,6 +2,10 @@ import React from 'react';
 
 import {Universe, PlayerState} from '../gameObjects';
 
+import '../wasm_exec.js';
+
+const wasm = require('../canvas.go');
+
 class CanvasView extends React.Component {
     constructor(props) {
         super(props);
@@ -104,7 +108,6 @@ class CanvasView extends React.Component {
         this.state.universe.state = state;
         const playerBody = this.state.universe.getBody(this.state.playerBodyId);
         this.state.universe.draw(this.state.context, playerBody || null);
-        console.log(playerBody);
         this.setState({
             playerBody,
         });
@@ -122,6 +125,11 @@ class CanvasView extends React.Component {
         this.state.isMounted = true;
         this.state.context = this.state.canvas.current.getContext('2d');
         window.addEventListener('resize', this.handleResizeEvent);
+
+        const go = new Go();
+		WebAssembly.instantiateStreaming(fetch(wasm), go.importObject).then((result) => {
+            go.run(result.instance)
+		});
     }
 
     componentWillUnmount() {

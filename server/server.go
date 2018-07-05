@@ -3,6 +3,7 @@ package server
 import (
 	"io"
 	"net/http"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -43,7 +44,13 @@ func NewServer(logger logrus.FieldLogger) *Server {
 	}
 	ret.router.HandleFunc("/", ret.indexHandler)
 	ret.router.HandleFunc("/game", ret.gameHandler)
-	ret.router.NotFoundHandler = http.FileServer(http.Dir("dist"))
+	distHandler := http.FileServer(http.Dir("dist"))
+	ret.router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if filepath.Ext(r.URL.Path) == ".wasm" {
+			w.Header().Set("Content-Type", "application/wasm")
+		}
+		distHandler.ServeHTTP(w, r)
+	})
 	go ret.run()
 	return ret
 }
