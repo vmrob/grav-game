@@ -127,9 +127,9 @@ class CanvasView extends React.Component {
         window.addEventListener('resize', this.handleResizeEvent);
 
         const go = new Go();
-		WebAssembly.instantiateStreaming(fetch(wasm), go.importObject).then((result) => {
+        WebAssembly.instantiateStreaming(fetch(wasm), go.importObject).then((result) => {
             go.run(result.instance)
-		});
+        });
     }
 
     componentWillUnmount() {
